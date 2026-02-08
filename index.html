@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro DJ Calendar - Analytics Edition</title>
+    <title>Pro DJ & Finance Master Calendar</title>
     <style>
         :root {
             --bg-color: #0a0a0a;
@@ -11,11 +11,11 @@
             --text-color: #f0f0f0;
             --border-color: #333;
             --accent: #007bff;
+            --green: #2ecc71;
+            --yellow: #f1c40f;
+            --red: #e74c3c;
             /* Tag Colors */
-            --wedding: #ff9ff3;
-            --club: #00d2d3;
-            --studio: #54a0ff;
-            --vinyl: #ff9f43;
+            --wedding: #ff9ff3; --club: #00d2d3; --studio: #54a0ff; --vinyl: #ff9f43; --card: #a29bfe;
         }
 
         body, html {
@@ -30,6 +30,8 @@
             padding: 10px 20px; background: #000; border-bottom: 2px solid var(--accent);
         }
 
+        .controls { display: flex; align-items: center; gap: 8px; }
+
         #calendar-grid {
             display: grid; grid-template-columns: repeat(7, 1fr);
             grid-template-rows: auto repeat(5, 1fr);
@@ -37,37 +39,34 @@
         }
 
         .day-header { background: #000; text-align: center; padding: 10px; font-weight: bold; color: #888; font-size: 0.8rem; }
-        .day-cell { background: var(--cell-bg); padding: 5px; cursor: pointer; position: relative; }
+        .day-cell { background: var(--cell-bg); padding: 5px; cursor: pointer; position: relative; overflow-y: auto; }
         .today { border: 2px solid var(--accent) !important; z-index: 5; }
 
-        /* Event Styles */
         .event {
-            position: relative; margin: 3px 0; padding: 4px 20px 4px 6px; 
+            position: relative; margin: 3px 0; padding: 4px 22px 4px 6px; 
             border-radius: 3px; font-size: 0.7rem; font-weight: bold; 
-            text-transform: uppercase; overflow: hidden;
+            text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        
-        /* Urgency Colors */
-        .green { background: #2ecc71; color: #000; }
-        .yellow { background: #f1c40f; color: #000; }
-        .red { background: #e74c3c; color: #fff; animation: blink 1s infinite; }
+
+        .green { background: var(--green); color: #000; }
+        .yellow { background: var(--yellow); color: #000; }
+        .red { background: var(--red); color: #fff; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.3; } }
 
-        /* Tag Colors */
+        /* Custom Tag Classes */
         .tag-wedding { background: var(--wedding) !important; color: #000 !important; }
         .tag-club    { background: var(--club) !important; color: #000 !important; }
         .tag-studio  { background: var(--studio) !important; color: #fff !important; }
         .tag-vinyl   { background: var(--vinyl) !important; color: #000 !important; }
+        .tag-card    { background: var(--card) !important; color: #000 !important; }
 
-        .delete-btn { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); cursor: pointer; padding: 0 4px; }
+        .delete-btn { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); cursor: pointer; padding: 0 4px; font-size: 10px; }
+        .delete-btn:hover { background: rgba(0,0,0,0.2); border-radius: 2px; }
 
-        /* Stats Panel */
         #stats-panel {
             background: #000; padding: 10px 20px; border-top: 1px solid var(--border-color);
-            display: flex; gap: 20px; font-size: 0.85rem; font-weight: bold;
+            display: flex; gap: 20px; font-size: 0.8rem; font-weight: bold;
         }
-        .stat-item { display: flex; align-items: center; gap: 8px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; }
 
         #modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.9);
@@ -75,24 +74,36 @@
         }
         .modal { background: #1a1a1a; padding: 20px; border-radius: 8px; width: 300px; border: 1px solid #333; }
         .modal input { width: 100%; margin: 8px 0; box-sizing: border-box; background: #222; color: #fff; border: 1px solid #444; padding: 8px; }
-        
-        button { cursor: pointer; padding: 6px 12px; border-radius: 4px; border: none; background: #333; color: white; }
+
+        button { cursor: pointer; padding: 6px 12px; border-radius: 4px; border: none; background: #333; color: white; font-weight: bold; font-size: 0.75rem; }
+        button:hover { opacity: 0.8; }
         .btn-home { background: var(--accent); }
+
+        @media print {
+            header, button, .delete-btn, #stats-panel { display: none !important; }
+            body { background: white; color: black; }
+            .day-cell { background: white; border: 1px solid #000 !important; min-height: 100px; }
+            .event { background: white !important; color: black !important; border: 1px solid #000; }
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <div style="display:flex; gap:8px;">
+    <div class="controls">
         <button onclick="moveMonth(-1)">PREV</button>
         <button class="btn-home" onclick="goHome()">HOME</button>
-        <input type="text" id="searchInput" placeholder="Search..." oninput="renderCalendar()">
+        <input type="text" id="searchInput" placeholder="Search gigs/cards..." oninput="renderCalendar()" style="background:#222; border:1px solid #444; color:white; padding:6px; border-radius:4px;">
     </div>
+    
     <div style="text-align: center;">
-        <div id="clock" style="font-family:monospace; color:var(--accent);">00:00:00</div>
-        <h2 id="monthLabel" style="margin:0; font-size:1rem;"></h2>
+        <div id="clock" style="font-family:monospace; color:var(--accent); font-size:1.1rem;">00:00:00</div>
+        <h2 id="monthLabel" style="margin:2px 0; font-size:0.9rem;"></h2>
     </div>
-    <div style="display:flex; gap:8px;">
+
+    <div class="controls">
+        <button onclick="document.getElementById('importFile').click()">IMPORT</button>
+        <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
         <button onclick="window.print()">PRINT</button>
         <button onclick="downloadBackup()">BACKUP</button>
         <button onclick="moveMonth(1)">NEXT</button>
@@ -102,19 +113,20 @@
 <div id="calendar-grid"></div>
 
 <div id="stats-panel">
-    <div class="stat-item"><div class="dot" style="background:var(--club)"></div> Club: <span id="count-club">0</span></div>
-    <div class="stat-item"><div class="dot" style="background:var(--wedding)"></div> Wedding: <span id="count-wedding">0</span></div>
-    <div class="stat-item"><div class="dot" style="background:var(--studio)"></div> Studio: <span id="count-studio">0</span></div>
-    <div class="stat-item"><div class="dot" style="background:var(--vinyl)"></div> Vinyl: <span id="count-vinyl">0</span></div>
-    <div class="stat-item" style="margin-left:auto;">Total Gigs: <span id="count-total">0</span></div>
+    <div style="display:flex; gap:15px; align-items:center;">
+        <span id="stat-club">Club: 0</span>
+        <span id="stat-wedding">Wedding: 0</span>
+        <span id="stat-card">Cards: 0</span>
+    </div>
+    <div style="margin-left:auto;">Total Monthly Items: <span id="stat-total">0</span></div>
 </div>
 
 <div id="modal-overlay">
     <div class="modal">
-        <h3 id="dateDisplay" style="margin-top:0;"></h3>
-        <input type="text" id="eventInput" placeholder="Event Name">
-        <input type="text" id="tagInput" placeholder="Tag (Club, Wedding, Studio, Vinyl)">
-        <label style="font-size:0.8rem;"><input type="checkbox" id="recurCheck"> Monthly</label>
+        <h3 id="dateDisplay" style="margin-top:0; font-size:1rem;"></h3>
+        <input type="text" id="eventInput" placeholder="Item Name (e.g. Amex Payment)">
+        <input type="text" id="tagInput" placeholder="Tag (Club, Wedding, Card, Studio)">
+        <label style="font-size:0.75rem;"><input type="checkbox" id="recurCheck"> Repeat Monthly</label>
         <div style="display: flex; justify-content: space-between; margin-top:15px;">
             <button onclick="closeModal()">Cancel</button>
             <button onclick="addEvent()" style="background:#2ecc71; color:black;">Save</button>
@@ -124,7 +136,7 @@
 
 <script>
     let currentViewDate = new Date();
-    let events = JSON.parse(localStorage.getItem('djEvents_vStats')) || [];
+    let events = JSON.parse(localStorage.getItem('djMaster_v4')) || [];
     let selectedDateStr = "";
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
@@ -134,7 +146,8 @@
         grid.innerHTML = "";
         const year = currentViewDate.getFullYear();
         const month = currentViewDate.getMonth();
-        const todayStr = new Date().toISOString().split('T')[0];
+        const today = new Date(); today.setHours(0,0,0,0);
+        const todayStr = today.toISOString().split('T')[0];
         
         document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
 
@@ -146,7 +159,7 @@
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
-        let stats = { club: 0, wedding: 0, studio: 0, vinyl: 0, total: 0 };
+        let stats = { club: 0, wedding: 0, card: 0, total: 0 };
 
         for (let i = 0; i < 42; i++) {
             const dayNum = i - firstDay + 1;
@@ -155,7 +168,7 @@
             
             if (dayNum > 0 && dayNum <= daysInMonth) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-                cell.innerHTML = `<div style="font-size:0.8rem;">${dayNum}</div>`;
+                cell.innerHTML = `<div style="font-size:0.75rem; margin-bottom:4px;">${dayNum}</div>`;
                 cell.onclick = () => openModal(dateStr);
                 if (dateStr === todayStr) cell.classList.add('today');
 
@@ -168,12 +181,13 @@
                 dayEvents.forEach(ev => {
                     const div = document.createElement('div');
                     const tag = (ev.tag || "").toLowerCase();
+                    let colorClass = getUrgency(dateStr, today);
                     
-                    let colorClass = getUrgency(dateStr, new Date());
                     if (tag.includes("wedding")) { colorClass = "tag-wedding"; stats.wedding++; }
                     else if (tag.includes("club")) { colorClass = "tag-club"; stats.club++; }
-                    else if (tag.includes("studio") || tag.includes("logic")) { colorClass = "tag-studio"; stats.studio++; }
-                    else if (tag.includes("vinyl")) { colorClass = "tag-vinyl"; stats.vinyl++; }
+                    else if (tag.includes("card") || tag.includes("amex") || tag.includes("visa")) { colorClass = "tag-card"; stats.card++; }
+                    else if (tag.includes("studio") || tag.includes("logic")) { colorClass = "tag-studio"; }
+                    else if (tag.includes("vinyl")) { colorClass = "tag-vinyl"; }
                     
                     stats.total++;
                     div.className = `event ${colorClass}`;
@@ -193,21 +207,19 @@
     }
 
     function updateStats(s) {
-        document.getElementById('count-club').innerText = s.club;
-        document.getElementById('count-wedding').innerText = s.wedding;
-        document.getElementById('count-studio').innerText = s.studio;
-        document.getElementById('count-vinyl').innerText = s.vinyl;
-        document.getElementById('count-total').innerText = s.total;
+        document.getElementById('stat-club').innerText = "Club: " + s.club;
+        document.getElementById('stat-wedding').innerText = "Wedding: " + s.wedding;
+        document.getElementById('stat-card').innerText = "Cards: " + s.card;
+        document.getElementById('stat-total').innerText = s.total;
     }
 
     function getUrgency(dateStr, today) {
-        today.setHours(0,0,0,0);
         const diff = Math.ceil((new Date(dateStr + "T00:00:00") - today) / 86400000);
         return diff >= 4 ? 'green' : (diff >= 2 ? 'yellow' : 'red');
     }
 
     function openModal(d) { selectedDateStr = d; document.getElementById('dateDisplay').innerText = d; document.getElementById('modal-overlay').style.display='flex'; }
-    function closeModal() { document.getElementById('modal-overlay').style.display='none'; }
+    function closeModal() { document.getElementById('modal-overlay').style.display='none'; document.getElementById('eventInput').value=""; document.getElementById('tagInput').value=""; }
 
     function addEvent() {
         const title = document.getElementById('eventInput').value;
@@ -215,25 +227,41 @@
         const recurring = document.getElementById('recurCheck').checked;
         if(title) {
             events.push({ title, tag, date: selectedDateStr, recurring, id: Date.now() });
-            localStorage.setItem('djEvents_vStats', JSON.stringify(events));
-            closeModal(); renderCalendar();
+            save(); closeModal(); renderCalendar();
         }
     }
 
     function deleteEvent(id) {
-        if(confirm("Delete event?")) {
+        if(confirm("Delete this item?")) {
             events = events.filter(e => e.id !== id);
-            localStorage.setItem('djEvents_vStats', JSON.stringify(events));
-            renderCalendar();
+            save(); renderCalendar();
         }
     }
+
+    function save() { localStorage.setItem('djMaster_v4', JSON.stringify(events)); }
 
     function downloadBackup() {
         const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `dj_calendar_stats.json`;
+        a.download = `calendar_master_backup.json`;
         a.click();
+    }
+
+    function importBackup(event) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (confirm("Merge " + imported.length + " items into your Master File?")) {
+                    events = [...events, ...imported];
+                    // De-duplicate by ID
+                    events = Array.from(new Map(events.map(item => [item.id, item])).values());
+                    save(); renderCalendar();
+                }
+            } catch (err) { alert("Invalid backup file."); }
+        };
+        reader.readAsText(event.target.files[0]);
     }
 
     function goHome() { currentViewDate = new Date(); renderCalendar(); }
