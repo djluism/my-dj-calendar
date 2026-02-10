@@ -3,48 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master DJ & Finance Tracker</title>
+    <title>DJ & Finance Tracker v2.0</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
             --green: #2ecc71; --yellow: #f1c40f; --red: #e74c3c; --purple: #a29bfe;
         }
-
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; overflow: hidden; }
-
         header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #000; border-bottom: 2px solid var(--accent); }
         .controls { display: flex; align-items: center; gap: 8px; }
         #clock { font-family: monospace; color: var(--accent); font-size: 1.1rem; }
-
         #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(5, 1fr); flex-grow: 1; background: var(--border-color); gap: 1px; }
         .day-header { background: #000; text-align: center; padding: 10px; font-weight: bold; color: #888; font-size: 0.8rem; }
-        .day-cell { background: var(--cell-bg); padding: 5px; cursor: pointer; position: relative; overflow-y: auto; }
-        .today { border: 2px solid var(--accent) !important; z-index: 5; box-shadow: inset 0 0 10px rgba(0,123,255,0.2); }
-
-        .event { position: relative; margin: 3px 0; padding: 4px 22px 4px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
-        /* Dynamic Urgency/Type Colors */
+        .day-cell { background: var(--cell-bg); padding: 5px; position: relative; overflow-y: auto; display: flex; flex-direction: column; }
+        .day-number { font-size: 0.75rem; margin-bottom: 4px; cursor: pointer; width: fit-content; padding: 2px 5px; border-radius: 3px; }
+        .day-number:hover { background: var(--accent); color: white; }
+        .today { border: 2px solid var(--accent) !important; z-index: 5; }
+        .event { position: relative; margin: 2px 0; padding: 4px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
         .green  { background: var(--green); color: #000; }
         .yellow { background: var(--yellow); color: #000; }
         .red    { background: var(--red); color: #fff; animation: blink 1s infinite; }
         .purple { background: var(--purple); color: #000; }
-
         @keyframes blink { 50% { opacity: 0.3; } }
-
-        .delete-btn { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); cursor: pointer; padding: 0 4px; font-size: 10px; }
-
         #stats-panel { background: #000; padding: 10px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: bold; }
-        .financials { display: flex; gap: 20px; }
         .income { color: var(--green); }
         .debt { color: var(--red); }
-
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background: #1a1a1a; padding: 20px; border-radius: 8px; width: 300px; border: 1px solid #333; }
-        .modal input { width: 100%; margin: 8px 0; box-sizing: border-box; background: #222; color: #fff; border: 1px solid #444; padding: 8px; }
-        .checkbox-row { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; font-size: 0.8rem; color: #ccc; }
-
-        button { cursor: pointer; padding: 6px 12px; border-radius: 4px; border: none; background: #333; color: white; font-weight: bold; }
-        .btn-save { background: var(--green); color: black; }
+        .modal { background: #1a1a1a; padding: 20px; border-radius: 8px; width: 320px; border: 1px solid #333; }
+        .modal input { width: 100%; margin: 8px 0; box-sizing: border-box; background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; }
+        button { cursor: pointer; padding: 8px 12px; border-radius: 4px; border: none; background: #333; color: white; font-weight: bold; font-size: 0.8rem; }
+        .btn-save { background: var(--green); color: black; margin-bottom: 5px; width:100%; }
+        .btn-google { background: #4285F4; color: white; margin-bottom: 5px; width:100%; }
+        .btn-delete { background: var(--red); color: white; margin-top: 10px; width:100%; }
     </style>
 </head>
 <body>
@@ -54,6 +44,9 @@
         <button onclick="moveMonth(-1)">PREV</button>
         <button onclick="goHome()" style="background:var(--accent)">HOME</button>
         <input type="text" id="searchInput" placeholder="Search..." oninput="renderCalendar()">
+        <label style="font-size: 0.65rem; display: flex; align-items: center; gap: 4px; color: #a29bfe; cursor: pointer;">
+            <input type="checkbox" id="filterBillCheck" onchange="renderCalendar()"> 💳 BILLS
+        </label>
     </div>
     <div style="text-align: center;">
         <div id="clock">00:00:00</div>
@@ -62,7 +55,6 @@
     <div class="controls">
         <button onclick="document.getElementById('importFile').click()">IMPORT</button>
         <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
-        <button onclick="window.print()">PRINT</button>
         <button onclick="downloadBackup()">BACKUP</button>
         <button onclick="moveMonth(1)">NEXT</button>
     </div>
@@ -71,32 +63,32 @@
 <div id="calendar-grid"></div>
 
 <div id="stats-panel">
-    <div class="financials">
-        <span class="income">Gig Income: $<span id="stat-income">0</span></span>
-        <span class="debt">Bill Debt: $<span id="stat-debt">0</span></span>
-    </div>
+    <div><span class="income">Gig Income: $<span id="stat-income">0</span></span> | <span class="debt">Bill Debt: $<span id="stat-debt">0</span></span></div>
     <div id="stat-net">Net Total: $0</div>
 </div>
 
 <div id="modal-overlay">
     <div class="modal">
-        <h3 id="dateDisplay" style="margin-top:0;"></h3>
-        <input type="text" id="eventInput" placeholder="Title (e.g., Amex or Warehouse Set)">
+        <h3 id="modalTitle" style="margin-top:0;">Add Item</h3>
+        <p id="dateDisplay" style="font-size: 0.8rem; color: #888; margin-bottom: 10px;"></p>
+        <input type="text" id="eventInput" placeholder="Title">
         <input type="number" id="amountInput" placeholder="Amount ($)">
-        <div class="checkbox-row">
-            <label><input type="checkbox" id="billCheck"> 💳 This is a Bill / Credit Card</label>
-            <label><input type="checkbox" id="recurCheck"> 🔄 Repeat Monthly</label>
+        <div style="font-size: 0.8rem; margin: 10px 0; display: flex; gap: 15px;">
+            <label style="cursor:pointer;"><input type="checkbox" id="billCheck"> 💳 Bill/Card</label>
+            <label style="cursor:pointer;"><input type="checkbox" id="recurCheck"> 🔄 Recurring</label>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-top:15px;">
-            <button onclick="closeModal()">Cancel</button>
-            <button class="btn-save" onclick="addEvent()">Save</button>
-        </div>
+        <button class="btn-save" onclick="saveEvent()">Save to App</button>
+        <button id="googleBtn" class="btn-google" onclick="syncToGoogle()">📅 Sync to Google</button>
+        <button id="deleteBtn" class="btn-delete" onclick="deleteCurrentEvent()">Delete Item</button>
+        <button onclick="closeModal()" style="width: 100%; margin-top: 8px; background: transparent; border: 1px solid #444;">Cancel</button>
     </div>
 </div>
 
 <script>
     let currentViewDate = new Date();
-    let events = JSON.parse(localStorage.getItem('djFinance_v6')) || [];
+    // Updated Local Storage version to v2
+    let events = JSON.parse(localStorage.getItem('djFinance_v2.0')) || [];
+    let editingEventId = null;
     let selectedDateStr = "";
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
@@ -107,6 +99,8 @@
         const year = currentViewDate.getFullYear();
         const month = currentViewDate.getMonth();
         const today = new Date(); today.setHours(0,0,0,0);
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const filterBills = document.getElementById('filterBillCheck').checked;
         
         document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
 
@@ -116,7 +110,6 @@
 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
         let totals = { income: 0, debt: 0 };
 
@@ -127,33 +120,22 @@
             
             if (dayNum > 0 && dayNum <= daysInMonth) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-                cell.innerHTML = `<div style="font-size:0.75rem;">${dayNum}</div>`;
-                cell.onclick = () => openModal(dateStr);
+                cell.innerHTML = `<div class="day-number" onclick="openModal('${dateStr}')">${dayNum}</div>`;
                 if (dateStr === today.toISOString().split('T')[0]) cell.classList.add('today');
 
-                const dayEvents = events.filter(e => {
-                    const content = e.title.toLowerCase();
+                events.filter(e => {
                     const isMatch = e.date === dateStr || (e.recurring && parseInt(e.date.split('-')[2]) === dayNum);
-                    return isMatch && content.includes(searchTerm);
-                });
-
-                dayEvents.forEach(ev => {
+                    const matchesSearch = e.title.toLowerCase().includes(searchTerm);
+                    const matchesBillFilter = filterBills ? e.isBill : true;
+                    return isMatch && matchesSearch && matchesBillFilter;
+                }).forEach(ev => {
                     const div = document.createElement('div');
                     const amt = parseFloat(ev.amount) || 0;
-                    
-                    // Logic: Use special purple logic if it's a bill
-                    let colorClass = getUrgency(dateStr, today, ev.isBill);
-                    
-                    if (ev.isBill) totals.debt += amt;
-                    else totals.income += amt;
+                    if (ev.isBill) totals.debt += amt; else totals.income += amt;
 
-                    div.className = `event ${colorClass}`;
-                    div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.isBill ? '💳 ' : ''}${ev.title} ($${amt})`;
-                    
-                    const x = document.createElement('span');
-                    x.className = 'delete-btn'; x.innerHTML = '✕';
-                    x.onclick = (e) => { e.stopPropagation(); deleteEvent(ev.id); };
-                    div.appendChild(x);
+                    div.className = `event ${getUrgency(dateStr, today, ev.isBill)}`;
+                    div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.title} ($${amt})`;
+                    div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
                     cell.appendChild(div);
                 });
             } else { cell.classList.add('not-current'); }
@@ -174,30 +156,54 @@
     function getUrgency(dateStr, today, isBill) {
         const diff = Math.ceil((new Date(dateStr + "T00:00:00") - today) / 86400000);
         if (diff <= 1) return 'red';
-        if (diff <= 2) return 'yellow';
+        if (diff <= 3) return 'yellow';
         return isBill ? 'purple' : 'green';
     }
 
-    function openModal(d) { selectedDateStr = d; document.getElementById('dateDisplay').innerText = d; document.getElementById('modal-overlay').style.display='flex'; }
-    function closeModal() { document.getElementById('modal-overlay').style.display='none'; document.getElementById('eventInput').value=""; document.getElementById('amountInput').value=""; document.getElementById('billCheck').checked = false; }
+    function openModal(date, event = null) {
+        selectedDateStr = date;
+        editingEventId = event ? event.id : null;
+        document.getElementById('modalTitle').innerText = event ? "Edit Item" : "Add Item";
+        document.getElementById('dateDisplay').innerText = date;
+        document.getElementById('eventInput').value = event ? event.title : "";
+        document.getElementById('amountInput').value = event ? event.amount : "";
+        document.getElementById('billCheck').checked = event ? event.isBill : false;
+        document.getElementById('recurCheck').checked = event ? event.recurring : false;
+        
+        document.getElementById('deleteBtn').style.display = event ? "block" : "none";
+        document.getElementById('googleBtn').style.display = event ? "block" : "none";
+        document.getElementById('modal-overlay').style.display = 'flex';
+    }
 
-    function addEvent() {
+    function syncToGoogle() {
+        const title = document.getElementById('eventInput').value;
+        const amount = document.getElementById('amountInput').value;
+        const date = selectedDateStr.replace(/-/g, '');
+        const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${date}/${date}&details=${encodeURIComponent('Amount: $' + amount)}`;
+        window.open(url, '_blank');
+    }
+
+    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+    function saveEvent() {
         const title = document.getElementById('eventInput').value;
         const amount = document.getElementById('amountInput').value;
         const isBill = document.getElementById('billCheck').checked;
         const recurring = document.getElementById('recurCheck').checked;
-        if(title) {
-            events.push({ title, amount, isBill, date: selectedDateStr, recurring, id: Date.now() });
-            localStorage.setItem('djFinance_v6', JSON.stringify(events));
-            closeModal(); renderCalendar();
+        if (editingEventId) {
+            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, isBill, recurring } : e);
+        } else {
+            events.push({ id: Date.now(), date: selectedDateStr, title, amount, isBill, recurring });
         }
+        localStorage.setItem('djFinance_v2.0', JSON.stringify(events));
+        closeModal(); renderCalendar();
     }
 
-    function deleteEvent(id) {
-        if(confirm("Delete item?")) {
-            events = events.filter(e => e.id !== id);
-            localStorage.setItem('djFinance_v6', JSON.stringify(events));
-            renderCalendar();
+    function deleteCurrentEvent() {
+        if(confirm("Delete this item?")) {
+            events = events.filter(e => e.id !== editingEventId);
+            localStorage.setItem('djFinance_v2.0', JSON.stringify(events));
+            closeModal(); renderCalendar();
         }
     }
 
@@ -205,7 +211,7 @@
         const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `finance_master_backup.json`;
+        a.download = `v2.0_finance_backup.json`;
         a.click();
     }
 
@@ -213,7 +219,7 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             events = JSON.parse(e.target.result);
-            localStorage.setItem('djFinance_v6', JSON.stringify(events));
+            localStorage.setItem('djFinance_v2.0', JSON.stringify(events));
             renderCalendar();
         };
         reader.readAsText(event.target.files[0]);
