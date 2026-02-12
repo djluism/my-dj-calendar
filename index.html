@@ -3,38 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DJ & Finance Tracker v2.0</title>
+    <title>Master DJ & Finance Tracker v2.1</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
             --green: #2ecc71; --yellow: #f1c40f; --red: #e74c3c; --purple: #a29bfe;
         }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Light Mode Overrides */
+        body.light-mode {
+            --bg-color: #f4f4f9; --cell-bg: #ffffff; --text-color: #333; --border-color: #ddd; --accent: #0056b3;
+        }
+
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; overflow: hidden; transition: background 0.3s, color 0.3s; }
+
         header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #000; border-bottom: 2px solid var(--accent); }
+        body.light-mode header { background: #eee; border-bottom: 2px solid var(--accent); }
+
         .controls { display: flex; align-items: center; gap: 8px; }
-        #clock { font-family: monospace; color: var(--accent); font-size: 1.1rem; }
         #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(5, 1fr); flex-grow: 1; background: var(--border-color); gap: 1px; }
-        .day-header { background: #000; text-align: center; padding: 10px; font-weight: bold; color: #888; font-size: 0.8rem; }
-        .day-cell { background: var(--cell-bg); padding: 5px; position: relative; overflow-y: auto; display: flex; flex-direction: column; }
-        .day-number { font-size: 0.75rem; margin-bottom: 4px; cursor: pointer; width: fit-content; padding: 2px 5px; border-radius: 3px; }
+        
+        .day-cell { background: var(--cell-bg); padding: 5px; position: relative; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
+        .day-number { font-size: 0.75rem; margin-bottom: 4px; cursor: pointer; width: fit-content; padding: 2px 5px; border-radius: 3px; font-weight: bold;}
         .day-number:hover { background: var(--accent); color: white; }
         .today { border: 2px solid var(--accent) !important; z-index: 5; }
-        .event { position: relative; margin: 2px 0; padding: 4px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
-        .green  { background: var(--green); color: #000; }
-        .yellow { background: var(--yellow); color: #000; }
-        .red    { background: var(--red); color: #fff; animation: blink 1s infinite; }
-        .purple { background: var(--purple); color: #000; }
-        @keyframes blink { 50% { opacity: 0.3; } }
-        #stats-panel { background: #000; padding: 10px 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: bold; }
-        .income { color: var(--green); }
-        .debt { color: var(--red); }
+
+        .event { position: relative; margin: 2px 0; padding: 4px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; color: #000; }
+        
+        /* Color Swatches in Modal */
+        .color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 10px 0; }
+        .swatch { width: 100%; height: 25px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
+        .swatch.selected { border: 2px solid white; box-shadow: 0 0 5px var(--accent); }
+
+        /* Mobile Layout */
+        @media (max-width: 600px) {
+            #calendar-grid { display: block; overflow-y: auto; }
+            .day-header { display: none; }
+            .day-cell { display: none; border-bottom: 1px solid var(--border-color); min-height: 80px; }
+            .day-cell.mobile-focus { display: flex; min-height: 200px; background: rgba(0,123,255,0.1); border-bottom: 4px solid var(--accent); }
+            .day-cell.mobile-upcoming { display: flex; }
+        }
+
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background: #1a1a1a; padding: 20px; border-radius: 8px; width: 320px; border: 1px solid #333; }
+        .modal { background: #1a1a1a; padding: 20px; border-radius: 8px; width: 320px; border: 1px solid #333; color: white; }
+        body.light-mode .modal { background: #fff; color: #333; border: 1px solid #ccc; }
         .modal input { width: 100%; margin: 8px 0; box-sizing: border-box; background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; }
-        button { cursor: pointer; padding: 8px 12px; border-radius: 4px; border: none; background: #333; color: white; font-weight: bold; font-size: 0.8rem; }
-        .btn-save { background: var(--green); color: black; margin-bottom: 5px; width:100%; }
-        .btn-google { background: #4285F4; color: white; margin-bottom: 5px; width:100%; }
-        .btn-delete { background: var(--red); color: white; margin-top: 10px; width:100%; }
+        body.light-mode .modal input { background: #f9f9f9; color: #333; border: 1px solid #ccc; }
+        
+        button { cursor: pointer; padding: 8px 12px; border-radius: 4px; border: none; background: #333; color: white; font-weight: bold; }
+        .btn-theme { background: var(--accent); font-size: 0.7rem; }
+        .red { animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.4; } }
     </style>
 </head>
 <body>
@@ -43,14 +62,14 @@
     <div class="controls">
         <button onclick="moveMonth(-1)">PREV</button>
         <button onclick="goHome()" style="background:var(--accent)">HOME</button>
-        <input type="text" id="searchInput" placeholder="Search..." oninput="renderCalendar()">
+        <button class="btn-theme" onclick="toggleTheme()">🌓 THEME</button>
         <label style="font-size: 0.65rem; display: flex; align-items: center; gap: 4px; color: #a29bfe; cursor: pointer;">
             <input type="checkbox" id="filterBillCheck" onchange="renderCalendar()"> 💳 BILLS
         </label>
     </div>
     <div style="text-align: center;">
-        <div id="clock">00:00:00</div>
-        <h2 id="monthLabel" style="margin:2px 0; font-size:1rem;"></h2>
+        <div id="clock" style="font-family:monospace; color:var(--accent); font-size:1.1rem;">00:00:00</div>
+        <h2 id="monthLabel" style="margin:0; font-size:0.9rem;"></h2>
     </div>
     <div class="controls">
         <button onclick="document.getElementById('importFile').click()">IMPORT</button>
@@ -62,36 +81,70 @@
 
 <div id="calendar-grid"></div>
 
-<div id="stats-panel">
-    <div><span class="income">Gig Income: $<span id="stat-income">0</span></span> | <span class="debt">Bill Debt: $<span id="stat-debt">0</span></span></div>
-    <div id="stat-net">Net Total: $0</div>
+<div id="stats-panel" style="background: #000; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; border-top: 1px solid #333;">
+    <div style="display:flex; gap:15px;">
+        <span style="color:var(--green);">Gigs: $<span id="stat-income">0</span></span>
+        <span style="color:var(--red);">Bills: $<span id="stat-debt">0</span></span>
+    </div>
+    <div id="stat-net" style="color:white;">Net: $0</div>
 </div>
 
 <div id="modal-overlay">
     <div class="modal">
-        <h3 id="modalTitle" style="margin-top:0;">Add Item</h3>
-        <p id="dateDisplay" style="font-size: 0.8rem; color: #888; margin-bottom: 10px;"></p>
+        <h3 id="modalTitle" style="margin:0;">Add Item</h3>
+        <p id="dateDisplay" style="font-size: 0.7rem; color: #888;"></p>
         <input type="text" id="eventInput" placeholder="Title">
         <input type="number" id="amountInput" placeholder="Amount ($)">
-        <div style="font-size: 0.8rem; margin: 10px 0; display: flex; gap: 15px;">
-            <label style="cursor:pointer;"><input type="checkbox" id="billCheck"> 💳 Bill/Card</label>
-            <label style="cursor:pointer;"><input type="checkbox" id="recurCheck"> 🔄 Recurring</label>
+        
+        <div class="color-grid" id="colorPickerGrid"></div>
+        <input type="color" id="customColor" style="height:30px; padding:2px; margin-bottom:10px;" onchange="selectColor(this.value)">
+
+        <div style="font-size: 0.8rem; margin-bottom: 10px; display: flex; gap: 10px;">
+            <label><input type="checkbox" id="billCheck"> 💳 Bill</label>
+            <label><input type="checkbox" id="recurCheck"> 🔄 Monthly</label>
         </div>
-        <button class="btn-save" onclick="saveEvent()">Save to App</button>
-        <button id="googleBtn" class="btn-google" onclick="syncToGoogle()">📅 Sync to Google</button>
-        <button id="deleteBtn" class="btn-delete" onclick="deleteCurrentEvent()">Delete Item</button>
-        <button onclick="closeModal()" style="width: 100%; margin-top: 8px; background: transparent; border: 1px solid #444;">Cancel</button>
+        
+        <button onclick="saveEvent()" style="background:var(--green); color:black; width:100%; margin-bottom:5px;">Save</button>
+        <button onclick="syncToGoogle()" style="background:#4285F4; width:100%; margin-bottom:5px;">📅 Sync Google</button>
+        <button id="deleteBtn" onclick="deleteCurrentEvent()" style="background:var(--red); width:100%; display:none;">Delete</button>
+        <button onclick="closeModal()" style="width:100%; background:transparent; border:1px solid #555; margin-top:5px;">Cancel</button>
     </div>
 </div>
 
 <script>
     let currentViewDate = new Date();
-    // Updated Local Storage version to v2
-    let events = JSON.parse(localStorage.getItem('djFinance_v2.0')) || [];
+    let events = JSON.parse(localStorage.getItem('djFinance_v2.1')) || [];
     let editingEventId = null;
     let selectedDateStr = "";
+    let selectedColor = "#2ecc71";
+
+    const presets = ["#ff9ff3", "#00d2d3", "#54a0ff", "#ff9f43", "#a29bfe", "#2ecc71", "#f1c40f", "#e74c3c", "#1dd1a1", "#48dbfb", "#ff6b6b", "#c8d6e5", "#576574", "#222f3e"];
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+
+    function initColorGrid() {
+        const grid = document.getElementById('colorPickerGrid');
+        grid.innerHTML = "";
+        presets.forEach(c => {
+            const s = document.createElement('div');
+            s.className = 'swatch';
+            s.style.background = c;
+            s.onclick = () => selectColor(c);
+            grid.appendChild(s);
+        });
+    }
+
+    function selectColor(c) {
+        selectedColor = c;
+        document.querySelectorAll('.swatch').forEach(s => {
+            s.classList.toggle('selected', s.style.backgroundColor === hexToRgb(c));
+        });
+    }
+
+    function hexToRgb(hex) {
+        const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+        return `rgb(${r}, ${g}, ${b})`;
+    }
 
     function renderCalendar() {
         const grid = document.getElementById('calendar-grid');
@@ -99,18 +152,17 @@
         const year = currentViewDate.getFullYear();
         const month = currentViewDate.getMonth();
         const today = new Date(); today.setHours(0,0,0,0);
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         const filterBills = document.getElementById('filterBillCheck').checked;
         
         document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
 
         ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
-            const h = document.createElement('div'); h.className='day-header'; h.innerText=d; grid.appendChild(h);
+            const h = document.createElement('div'); h.className='day-header'; h.innerText=d; h.style.cssText="background:#000; text-align:center; padding:10px; font-weight:bold; color:#888; font-size:0.8rem;";
+            grid.appendChild(h);
         });
 
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-
         let totals = { income: 0, debt: 0 };
 
         for (let i = 0; i < 42; i++) {
@@ -121,24 +173,28 @@
             if (dayNum > 0 && dayNum <= daysInMonth) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
                 cell.innerHTML = `<div class="day-number" onclick="openModal('${dateStr}')">${dayNum}</div>`;
-                if (dateStr === today.toISOString().split('T')[0]) cell.classList.add('today');
+                
+                // Mobile Focus Logic
+                const diff = Math.ceil((new Date(dateStr + "T00:00:00") - today) / 86400000);
+                if (diff === 0) cell.classList.add('mobile-focus', 'today');
+                else if (diff > 0 && diff < 7) cell.classList.add('mobile-upcoming');
 
                 events.filter(e => {
                     const isMatch = e.date === dateStr || (e.recurring && parseInt(e.date.split('-')[2]) === dayNum);
-                    const matchesSearch = e.title.toLowerCase().includes(searchTerm);
-                    const matchesBillFilter = filterBills ? e.isBill : true;
-                    return isMatch && matchesSearch && matchesBillFilter;
+                    return isMatch && (filterBills ? e.isBill : true);
                 }).forEach(ev => {
                     const div = document.createElement('div');
                     const amt = parseFloat(ev.amount) || 0;
                     if (ev.isBill) totals.debt += amt; else totals.income += amt;
 
-                    div.className = `event ${getUrgency(dateStr, today, ev.isBill)}`;
+                    div.className = 'event';
+                    if (diff <= 1) div.classList.add('red');
+                    div.style.background = ev.color || '#2ecc71';
                     div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.title} ($${amt})`;
                     div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
                     cell.appendChild(div);
                 });
-            } else { cell.classList.add('not-current'); }
+            } else { cell.classList.add('not-current'); cell.style.opacity = "0.2"; }
             grid.appendChild(cell);
         }
         updateFinancials(totals);
@@ -149,15 +205,8 @@
         document.getElementById('stat-debt').innerText = t.debt.toFixed(2);
         const net = t.income - t.debt;
         const netEl = document.getElementById('stat-net');
-        netEl.innerText = "Net Total: $" + net.toFixed(2);
+        netEl.innerText = "Net: $" + net.toFixed(2);
         netEl.style.color = net >= 0 ? "#2ecc71" : "#e74c3c";
-    }
-
-    function getUrgency(dateStr, today, isBill) {
-        const diff = Math.ceil((new Date(dateStr + "T00:00:00") - today) / 86400000);
-        if (diff <= 1) return 'red';
-        if (diff <= 3) return 'yellow';
-        return isBill ? 'purple' : 'green';
     }
 
     function openModal(date, event = null) {
@@ -169,18 +218,9 @@
         document.getElementById('amountInput').value = event ? event.amount : "";
         document.getElementById('billCheck').checked = event ? event.isBill : false;
         document.getElementById('recurCheck').checked = event ? event.recurring : false;
-        
+        selectColor(event ? event.color : "#2ecc71");
         document.getElementById('deleteBtn').style.display = event ? "block" : "none";
-        document.getElementById('googleBtn').style.display = event ? "block" : "none";
         document.getElementById('modal-overlay').style.display = 'flex';
-    }
-
-    function syncToGoogle() {
-        const title = document.getElementById('eventInput').value;
-        const amount = document.getElementById('amountInput').value;
-        const date = selectedDateStr.replace(/-/g, '');
-        const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${date}/${date}&details=${encodeURIComponent('Amount: $' + amount)}`;
-        window.open(url, '_blank');
     }
 
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
@@ -191,43 +231,42 @@
         const isBill = document.getElementById('billCheck').checked;
         const recurring = document.getElementById('recurCheck').checked;
         if (editingEventId) {
-            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, isBill, recurring } : e);
+            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, isBill, recurring, color: selectedColor } : e);
         } else {
-            events.push({ id: Date.now(), date: selectedDateStr, title, amount, isBill, recurring });
+            events.push({ id: Date.now(), date: selectedDateStr, title, amount, isBill, recurring, color: selectedColor });
         }
-        localStorage.setItem('djFinance_v2.0', JSON.stringify(events));
+        localStorage.setItem('djFinance_v2.1', JSON.stringify(events));
         closeModal(); renderCalendar();
     }
 
     function deleteCurrentEvent() {
-        if(confirm("Delete this item?")) {
+        if(confirm("Delete item?")) {
             events = events.filter(e => e.id !== editingEventId);
-            localStorage.setItem('djFinance_v2.0', JSON.stringify(events));
+            localStorage.setItem('djFinance_v2.1', JSON.stringify(events));
             closeModal(); renderCalendar();
         }
     }
 
+    function syncToGoogle() {
+        const date = selectedDateStr.replace(/-/g, '');
+        const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(document.getElementById('eventInput').value)}&dates=${date}/${date}&details=${encodeURIComponent('Amount: $' + document.getElementById('amountInput').value)}`;
+        window.open(url, '_blank');
+    }
+
+    function toggleTheme() { document.body.classList.toggle('light-mode'); }
     function downloadBackup() {
         const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `v2.0_finance_backup.json`;
-        a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.1_finance_backup.json`; a.click();
     }
-
     function importBackup(event) {
         const reader = new FileReader();
-        reader.onload = (e) => {
-            events = JSON.parse(e.target.result);
-            localStorage.setItem('djFinance_v2.0', JSON.stringify(events));
-            renderCalendar();
-        };
+        reader.onload = (e) => { events = JSON.parse(e.target.result); localStorage.setItem('djFinance_v2.1', JSON.stringify(events)); renderCalendar(); };
         reader.readAsText(event.target.files[0]);
     }
-
     function goHome() { currentViewDate = new Date(); renderCalendar(); }
     function moveMonth(n) { currentViewDate.setMonth(currentViewDate.getMonth() + n); renderCalendar(); }
-    window.onload = renderCalendar;
+
+    window.onload = () => { initColorGrid(); renderCalendar(); };
 </script>
 </body>
 </html>
