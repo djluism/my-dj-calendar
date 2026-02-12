@@ -2,118 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master DJ & Finance Tracker v2.1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro DJ & Finance v2.2</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
-            --green: #2ecc71; --yellow: #f1c40f; --red: #e74c3c; --purple: #a29bfe;
+            --green: #2ecc71; --yellow: #f1c40f; --red: #e74c3c;
         }
+        body.light-mode { --bg-color: #f4f4f9; --cell-bg: #ffffff; --text-color: #333; --border-color: #ddd; --accent: #0056b3; }
 
-        /* Light Mode Overrides */
-        body.light-mode {
-            --bg-color: #f4f4f9; --cell-bg: #ffffff; --text-color: #333; --border-color: #ddd; --accent: #0056b3;
-        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; overflow: hidden; }
 
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; overflow: hidden; transition: background 0.3s, color 0.3s; }
-
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: #000; border-bottom: 2px solid var(--accent); }
-        body.light-mode header { background: #eee; border-bottom: 2px solid var(--accent); }
+        header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 10px 15px; background: #000; border-bottom: 2px solid var(--accent); z-index: 100; }
+        body.light-mode header { background: #eee; }
 
         .controls { display: flex; align-items: center; gap: 8px; }
         #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(5, 1fr); flex-grow: 1; background: var(--border-color); gap: 1px; }
         
-        .day-cell { background: var(--cell-bg); padding: 5px; position: relative; overflow-y: auto; display: flex; flex-direction: column; min-height: 0; }
-        .day-number { font-size: 0.75rem; margin-bottom: 4px; cursor: pointer; width: fit-content; padding: 2px 5px; border-radius: 3px; font-weight: bold;}
-        .day-number:hover { background: var(--accent); color: white; }
+        .day-header { background: #000; text-align: center; padding: 10px; font-weight: bold; color: #888; font-size: 0.7rem; }
+        .day-cell { background: var(--cell-bg); padding: 8px; position: relative; display: flex; flex-direction: column; overflow-y: auto; }
+        .day-number { font-size: 0.75rem; margin-bottom: 5px; cursor: pointer; font-weight: bold; width: fit-content; padding: 2px 6px; border-radius: 4px; }
+        .day-number:hover { background: var(--accent); color: #fff; }
         .today { border: 2px solid var(--accent) !important; z-index: 5; }
 
-        .event { position: relative; margin: 2px 0; padding: 4px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; color: #000; }
-        
-        /* Color Swatches in Modal */
-        .color-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 10px 0; }
-        .swatch { width: 100%; height: 25px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); }
-        .swatch.selected { border: 2px solid white; box-shadow: 0 0 5px var(--accent); }
+        .event { position: relative; margin: 3px 0; padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; color: #000; }
+        .urgent-yellow { background: var(--yellow) !important; border: 1px solid #000; }
+        .urgent-red { background: var(--red) !important; color: #fff !important; animation: blink 1s infinite; border: 1px solid #fff; }
+        @keyframes blink { 50% { opacity: 0.4; } }
 
-        /* Mobile Layout */
+        /* Mobile Week-View v2.2 (Your Illustrator Layout) */
         @media (max-width: 600px) {
-            #calendar-grid { display: block; overflow-y: auto; }
+            header { padding: 5px 10px; }
+            #calendar-grid { display: flex; flex-direction: column; background: var(--bg-color); gap: 5px; padding: 5px; }
             .day-header { display: none; }
-            .day-cell { display: none; border-bottom: 1px solid var(--border-color); min-height: 80px; }
-            .day-cell.mobile-focus { display: flex; min-height: 200px; background: rgba(0,123,255,0.1); border-bottom: 4px solid var(--accent); }
-            .day-cell.mobile-upcoming { display: flex; }
+            .day-cell { display: none; border-radius: 8px; border: 1px solid var(--border-color); }
+            
+            /* The "1" (Today Hero) */
+            .day-cell.mobile-focus { display: flex; flex: 0 0 40%; background: rgba(0,123,255,0.08); border: 2px solid var(--accent); }
+            .day-cell.mobile-focus .day-number { font-size: 1.2rem; }
+            
+            /* The "6" (Grid) */
+            .upcoming-container { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 5px; flex-grow: 1; }
+            .day-cell.mobile-upcoming { display: flex; flex: 1; height: 100%; }
+
+            .pc-hide { display: none; }
+            .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; display: flex; justify-content: space-around; padding: 15px; border-top: 2px solid var(--accent); z-index: 100; }
         }
 
+        @media (min-width: 601px) {
+            .mobile-nav { display: none; }
+            .mobile-hide { display: none; }
+        }
+
+        #stats-panel { background: #000; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: bold; border-top: 1px solid #333; }
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal { background: #1a1a1a; padding: 20px; border-radius: 8px; width: 320px; border: 1px solid #333; color: white; }
-        body.light-mode .modal { background: #fff; color: #333; border: 1px solid #ccc; }
-        .modal input { width: 100%; margin: 8px 0; box-sizing: border-box; background: #222; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 4px; }
-        body.light-mode .modal input { background: #f9f9f9; color: #333; border: 1px solid #ccc; }
-        
-        button { cursor: pointer; padding: 8px 12px; border-radius: 4px; border: none; background: #333; color: white; font-weight: bold; }
-        .btn-theme { background: var(--accent); font-size: 0.7rem; }
-        .red { animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.4; } }
+        .modal { background: #1a1a1a; padding: 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid #444; }
+        .modal input { width: 100%; margin: 10px 0; background: #222; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 6px; }
+        button { cursor: pointer; padding: 10px 16px; border-radius: 6px; border: none; background: #333; color: white; font-weight: bold; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
 <header>
     <div class="controls">
-        <button onclick="moveMonth(-1)">PREV</button>
+        <button class="pc-hide" onclick="moveByStep(-1)">LAST WEEK</button>
         <button onclick="goHome()" style="background:var(--accent)">HOME</button>
-        <button class="btn-theme" onclick="toggleTheme()">🌓 THEME</button>
-        <label style="font-size: 0.65rem; display: flex; align-items: center; gap: 4px; color: #a29bfe; cursor: pointer;">
+        <input type="date" id="gotoDate" class="mobile-hide" onchange="jumpToDate(this.value)" style="background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; font-size:0.7rem;">
+        <label style="font-size: 0.65rem; color: #a29bfe; cursor: pointer; display: flex; align-items: center; gap:4px;">
             <input type="checkbox" id="filterBillCheck" onchange="renderCalendar()"> 💳 BILLS
         </label>
     </div>
     <div style="text-align: center;">
         <div id="clock" style="font-family:monospace; color:var(--accent); font-size:1.1rem;">00:00:00</div>
-        <h2 id="monthLabel" style="margin:0; font-size:0.9rem;"></h2>
+        <div id="monthLabel" style="font-size:0.8rem; font-weight:bold;"></div>
     </div>
-    <div class="controls">
-        <button onclick="document.getElementById('importFile').click()">IMPORT</button>
-        <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
-        <button onclick="downloadBackup()">BACKUP</button>
-        <button onclick="moveMonth(1)">NEXT</button>
+    <div class="controls pc-hide">
+        <button onclick="moveByStep(1)">NEXT WEEK</button>
+        <button style="background:#444;" onclick="toggleTheme()">🌓</button>
     </div>
 </header>
 
 <div id="calendar-grid"></div>
 
-<div id="stats-panel" style="background: #000; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; border-top: 1px solid #333;">
+<div class="mobile-nav">
+    <button onclick="moveByStep(-1)">PREV WEEK</button>
+    <button onclick="downloadBackup()" style="background:#444">BACKUP</button>
+    <input type="date" id="mobileGoto" onchange="jumpToDate(this.value)" style="width:40px; opacity:0.8;">
+    <button onclick="moveByStep(1)">NEXT WEEK</button>
+</div>
+
+<div id="stats-panel">
     <div style="display:flex; gap:15px;">
-        <span style="color:var(--green);">Gigs: $<span id="stat-income">0</span></span>
-        <span style="color:var(--red);">Bills: $<span id="stat-debt">0</span></span>
+        <span style="color:var(--green); font-size: 0.9rem;">Gigs: $<span id="stat-income">0</span></span>
+        <span style="color:var(--red); font-size: 0.9rem;">Bills: $<span id="stat-debt">0</span></span>
     </div>
-    <div id="stat-net" style="color:white;">Net: $0</div>
+    <div id="stat-net" style="font-size: 0.9rem;">Net: $0</div>
 </div>
 
 <div id="modal-overlay">
     <div class="modal">
-        <h3 id="modalTitle" style="margin:0;">Add Item</h3>
-        <p id="dateDisplay" style="font-size: 0.7rem; color: #888;"></p>
+        <h3 id="modalTitle" style="margin:0; color:white;">Edit/Add</h3>
+        <p id="dateDisplay" style="font-size: 0.8rem; color: #888; margin: 5px 0;"></p>
         <input type="text" id="eventInput" placeholder="Title">
         <input type="number" id="amountInput" placeholder="Amount ($)">
-        
-        <div class="color-grid" id="colorPickerGrid"></div>
-        <input type="color" id="customColor" style="height:30px; padding:2px; margin-bottom:10px;" onchange="selectColor(this.value)">
-
-        <div style="font-size: 0.8rem; margin-bottom: 10px; display: flex; gap: 10px;">
+        <div id="colorPickerGrid" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px; margin:10px 0;"></div>
+        <input type="color" id="customColor" style="width:100%; height:35px; margin-bottom:15px; border:none; background:none;" onchange="selectColor(this.value)">
+        <div style="font-size: 0.9rem; margin-bottom: 15px; display: flex; gap: 20px; color:white;">
             <label><input type="checkbox" id="billCheck"> 💳 Bill</label>
             <label><input type="checkbox" id="recurCheck"> 🔄 Monthly</label>
         </div>
-        
-        <button onclick="saveEvent()" style="background:var(--green); color:black; width:100%; margin-bottom:5px;">Save</button>
-        <button onclick="syncToGoogle()" style="background:#4285F4; width:100%; margin-bottom:5px;">📅 Sync Google</button>
+        <button onclick="saveEvent()" style="background:var(--green); color:black; width:100%; margin-bottom:8px;">Save to App</button>
+        <button onclick="syncToGoogle()" style="background:#4285F4; width:100%; margin-bottom:8px;">📅 Sync to Google</button>
         <button id="deleteBtn" onclick="deleteCurrentEvent()" style="background:var(--red); width:100%; display:none;">Delete</button>
-        <button onclick="closeModal()" style="width:100%; background:transparent; border:1px solid #555; margin-top:5px;">Cancel</button>
+        <button onclick="closeModal()" style="width:100%; background:transparent; border:1px solid #555; color:white; margin-top:5px;">Cancel</button>
     </div>
 </div>
 
 <script>
     let currentViewDate = new Date();
-    let events = JSON.parse(localStorage.getItem('djFinance_v2.1')) || [];
+    let events = JSON.parse(localStorage.getItem('djFinance_v2.2')) || [];
     let editingEventId = null;
     let selectedDateStr = "";
     let selectedColor = "#2ecc71";
@@ -127,76 +135,81 @@
         grid.innerHTML = "";
         presets.forEach(c => {
             const s = document.createElement('div');
-            s.className = 'swatch';
-            s.style.background = c;
+            s.style.cssText = `background:${c}; height:30px; border-radius:6px; cursor:pointer; border:1px solid rgba(255,255,255,0.2);`;
             s.onclick = () => selectColor(c);
             grid.appendChild(s);
         });
     }
 
-    function selectColor(c) {
-        selectedColor = c;
-        document.querySelectorAll('.swatch').forEach(s => {
-            s.classList.toggle('selected', s.style.backgroundColor === hexToRgb(c));
-        });
-    }
-
-    function hexToRgb(hex) {
-        const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-        return `rgb(${r}, ${g}, ${b})`;
-    }
+    function selectColor(c) { selectedColor = c; }
 
     function renderCalendar() {
         const grid = document.getElementById('calendar-grid');
         grid.innerHTML = "";
-        const year = currentViewDate.getFullYear();
-        const month = currentViewDate.getMonth();
         const today = new Date(); today.setHours(0,0,0,0);
         const filterBills = document.getElementById('filterBillCheck').checked;
-        
+        const isMobile = window.innerWidth <= 600;
+
         document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
 
-        ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
-            const h = document.createElement('div'); h.className='day-header'; h.innerText=d; h.style.cssText="background:#000; text-align:center; padding:10px; font-weight:bold; color:#888; font-size:0.8rem;";
-            grid.appendChild(h);
-        });
+        if (!isMobile) {
+            ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+                const h = document.createElement('div'); h.className='day-header'; h.innerText=d; grid.appendChild(h);
+            });
+        }
 
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const startDay = isMobile ? new Date(currentViewDate) : new Date(currentViewDate.getFullYear(), currentViewDate.getMonth(), 1);
+        if (!isMobile) startDay.setDate(startDay.getDate() - startDay.getDay());
+
         let totals = { income: 0, debt: 0 };
+        const loopCount = isMobile ? 7 : 42;
 
-        for (let i = 0; i < 42; i++) {
-            const dayNum = i - firstDay + 1;
+        // Mobile wrapper for the 3x2 grid
+        let upcomingContainer = null;
+        if (isMobile) {
+            upcomingContainer = document.createElement('div');
+            upcomingContainer.className = 'upcoming-container';
+        }
+
+        for (let i = 0; i < loopCount; i++) {
+            const day = new Date(startDay);
+            day.setDate(day.getDate() + i);
+            const dateStr = day.toISOString().split('T')[0];
+            const diff = Math.ceil((day - today) / 86400000);
+
             const cell = document.createElement('div');
             cell.className = 'day-cell';
+            cell.innerHTML = `<div class="day-number" onclick="openModal('${dateStr}')">${day.getDate()} ${isMobile ? day.toLocaleDateString('en-US', {weekday: 'short'}) : ''}</div>`;
             
-            if (dayNum > 0 && dayNum <= daysInMonth) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
-                cell.innerHTML = `<div class="day-number" onclick="openModal('${dateStr}')">${dayNum}</div>`;
-                
-                // Mobile Focus Logic
-                const diff = Math.ceil((new Date(dateStr + "T00:00:00") - today) / 86400000);
-                if (diff === 0) cell.classList.add('mobile-focus', 'today');
-                else if (diff > 0 && diff < 7) cell.classList.add('mobile-upcoming');
+            if (dateStr === today.toISOString().split('T')[0]) cell.classList.add('today');
 
-                events.filter(e => {
-                    const isMatch = e.date === dateStr || (e.recurring && parseInt(e.date.split('-')[2]) === dayNum);
-                    return isMatch && (filterBills ? e.isBill : true);
-                }).forEach(ev => {
-                    const div = document.createElement('div');
-                    const amt = parseFloat(ev.amount) || 0;
-                    if (ev.isBill) totals.debt += amt; else totals.income += amt;
+            if (isMobile) {
+                if (i === 0) cell.classList.add('mobile-focus');
+                else cell.classList.add('mobile-upcoming');
+            }
 
-                    div.className = 'event';
-                    if (diff <= 1) div.classList.add('red');
-                    div.style.background = ev.color || '#2ecc71';
-                    div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.title} ($${amt})`;
-                    div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
-                    cell.appendChild(div);
-                });
-            } else { cell.classList.add('not-current'); cell.style.opacity = "0.2"; }
-            grid.appendChild(cell);
+            events.filter(e => {
+                const isMatch = e.date === dateStr || (e.recurring && parseInt(e.date.split('-')[2]) === day.getDate());
+                return isMatch && (filterBills ? e.isBill : true);
+            }).forEach(ev => {
+                const div = document.createElement('div');
+                const amt = parseFloat(ev.amount) || 0;
+                if (ev.isBill) totals.debt += amt; else totals.income += amt;
+
+                div.className = 'event';
+                if (diff <= 1) div.classList.add('urgent-red');
+                else if (diff <= 2) div.classList.add('urgent-yellow');
+                else div.style.background = ev.color || '#2ecc71';
+
+                div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.title} ($${amt})`;
+                div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
+                cell.appendChild(div);
+            });
+
+            if (isMobile && i > 0) upcomingContainer.appendChild(cell);
+            else grid.appendChild(cell);
         }
+        if (isMobile) grid.appendChild(upcomingContainer);
         updateFinancials(totals);
     }
 
@@ -212,19 +225,28 @@
     function openModal(date, event = null) {
         selectedDateStr = date;
         editingEventId = event ? event.id : null;
-        document.getElementById('modalTitle').innerText = event ? "Edit Item" : "Add Item";
-        document.getElementById('dateDisplay').innerText = date;
+        document.getElementById('modalTitle').innerText = event ? "Edit" : "Add";
+        document.getElementById('dateDisplay').innerText = new Date(date + "T00:00:00").toDateString();
         document.getElementById('eventInput').value = event ? event.title : "";
         document.getElementById('amountInput').value = event ? event.amount : "";
         document.getElementById('billCheck').checked = event ? event.isBill : false;
         document.getElementById('recurCheck').checked = event ? event.recurring : false;
-        selectColor(event ? event.color : "#2ecc71");
+        selectedColor = event ? event.color : "#2ecc71";
         document.getElementById('deleteBtn').style.display = event ? "block" : "none";
         document.getElementById('modal-overlay').style.display = 'flex';
     }
 
-    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+    function moveByStep(n) {
+        if (window.innerWidth <= 600) currentViewDate.setDate(currentViewDate.getDate() + (n * 7));
+        else currentViewDate.setMonth(currentViewDate.getMonth() + n);
+        renderCalendar();
+    }
 
+    function jumpToDate(val) { if(val) { currentViewDate = new Date(val + "T00:00:00"); renderCalendar(); } }
+    function goHome() { currentViewDate = new Date(); renderCalendar(); }
+    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+    function toggleTheme() { document.body.classList.toggle('light-mode'); }
+    
     function saveEvent() {
         const title = document.getElementById('eventInput').value;
         const amount = document.getElementById('amountInput').value;
@@ -235,14 +257,14 @@
         } else {
             events.push({ id: Date.now(), date: selectedDateStr, title, amount, isBill, recurring, color: selectedColor });
         }
-        localStorage.setItem('djFinance_v2.1', JSON.stringify(events));
+        localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
         closeModal(); renderCalendar();
     }
 
     function deleteCurrentEvent() {
         if(confirm("Delete item?")) {
             events = events.filter(e => e.id !== editingEventId);
-            localStorage.setItem('djFinance_v2.1', JSON.stringify(events));
+            localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
             closeModal(); renderCalendar();
         }
     }
@@ -253,20 +275,19 @@
         window.open(url, '_blank');
     }
 
-    function toggleTheme() { document.body.classList.toggle('light-mode'); }
     function downloadBackup() {
         const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.1_finance_backup.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.2_backup.json`; a.click();
     }
+    
     function importBackup(event) {
         const reader = new FileReader();
-        reader.onload = (e) => { events = JSON.parse(e.target.result); localStorage.setItem('djFinance_v2.1', JSON.stringify(events)); renderCalendar(); };
+        reader.onload = (e) => { events = JSON.parse(e.target.result); localStorage.setItem('djFinance_v2.2', JSON.stringify(events)); renderCalendar(); };
         reader.readAsText(event.target.files[0]);
     }
-    function goHome() { currentViewDate = new Date(); renderCalendar(); }
-    function moveMonth(n) { currentViewDate.setMonth(currentViewDate.getMonth() + n); renderCalendar(); }
 
     window.onload = () => { initColorGrid(); renderCalendar(); };
+    window.onresize = renderCalendar;
 </script>
 </body>
 </html>
