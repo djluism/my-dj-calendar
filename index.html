@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.2.2</title>
+    <title>Pro DJ & Finance v2.2.3</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -13,8 +13,8 @@
 
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Notification Bar */
-        #toast { position: fixed; top: -50px; left: 50%; transform: translateX(-50%); background: var(--green); color: #000; padding: 10px 20px; border-radius: 0 0 8px 8px; font-weight: bold; font-size: 0.8rem; z-index: 2000; transition: top 0.4s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        /* Proof of Sync: The Toast Notification */
+        #toast { position: fixed; top: -60px; left: 50%; transform: translateX(-50%); background: var(--green); color: #000; padding: 12px 30px; border-radius: 0 0 12px 12px; font-weight: bold; font-size: 0.9rem; z-index: 9999; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 5px 20px rgba(0,0,0,0.6); }
 
         header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 10px 15px; background: #000; border-bottom: 2px solid var(--accent); z-index: 100; }
         body.light-mode header { background: #eee; }
@@ -26,10 +26,17 @@
         .day-number:hover { background: var(--accent); color: #fff; }
         .today { border: 2px solid var(--accent) !important; z-index: 5; }
 
-        .event { position: relative; margin: 3px 0; padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; color: #000; }
+        /* The Smooth Urgency Animation */
+        .event { position: relative; margin: 3px 0; padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; color: #000; transition: background 0.2s; }
+        
+        .urgent-red { animation: smooth-blink-red 1.5s infinite; border: 1.5px solid #fff; color: #fff !important; }
         .urgent-yellow { background: var(--yellow) !important; border: 1px solid #000; }
-        .urgent-red { background: var(--red) !important; color: #fff !important; animation: blink 1s infinite; border: 1px solid #fff; }
-        @keyframes blink { 50% { opacity: 0.4; } }
+
+        @keyframes smooth-blink-red { 
+            0% { background-color: var(--red); }
+            50% { background-color: inherit; color: #000; } /* Cycles back to the 'original' inherited color */
+            100% { background-color: var(--red); }
+        }
 
         @media (max-width: 600px) {
             #calendar-grid { display: flex; flex-direction: column; background: var(--bg-color); gap: 5px; padding: 5px; padding-bottom: 80px; }
@@ -126,7 +133,7 @@
         const t = document.getElementById('toast');
         t.innerText = msg;
         t.style.top = "0";
-        setTimeout(() => { t.style.top = "-50px"; }, 2000);
+        setTimeout(() => { t.style.top = "-60px"; }, 2500);
     }
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
@@ -194,9 +201,11 @@
                 if (ev.isBill) totals.debt += amt; else totals.income += amt;
                 div.className = 'event';
                 const diff = Math.ceil((day - today) / 86400000);
+                
+                div.style.backgroundColor = ev.color || '#2ecc71';
                 if (diff <= 1) div.classList.add('urgent-red');
                 else if (diff <= 2) div.classList.add('urgent-yellow');
-                else div.style.background = ev.color || '#2ecc71';
+                
                 div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.title} ($${amt})`;
                 div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
                 cell.appendChild(div);
@@ -270,7 +279,7 @@
 
     function downloadBackup() {
         const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.2.2_backup.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.2.3_backup.json`; a.click();
         showToast("Backup Downloaded");
     }
 
