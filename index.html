@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.2</title>
+    <title>Pro DJ & Finance v2.2.2</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -13,12 +13,13 @@
 
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; overflow: hidden; }
 
+        /* Notification Bar */
+        #toast { position: fixed; top: -50px; left: 50%; transform: translateX(-50%); background: var(--green); color: #000; padding: 10px 20px; border-radius: 0 0 8px 8px; font-weight: bold; font-size: 0.8rem; z-index: 2000; transition: top 0.4s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+
         header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 10px 15px; background: #000; border-bottom: 2px solid var(--accent); z-index: 100; }
         body.light-mode header { background: #eee; }
 
-        .controls { display: flex; align-items: center; gap: 8px; }
         #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(5, 1fr); flex-grow: 1; background: var(--border-color); gap: 1px; }
-        
         .day-header { background: #000; text-align: center; padding: 10px; font-weight: bold; color: #888; font-size: 0.7rem; }
         .day-cell { background: var(--cell-bg); padding: 8px; position: relative; display: flex; flex-direction: column; overflow-y: auto; }
         .day-number { font-size: 0.75rem; margin-bottom: 5px; cursor: pointer; font-weight: bold; width: fit-content; padding: 2px 6px; border-radius: 4px; }
@@ -30,43 +31,33 @@
         .urgent-red { background: var(--red) !important; color: #fff !important; animation: blink 1s infinite; border: 1px solid #fff; }
         @keyframes blink { 50% { opacity: 0.4; } }
 
-        /* Mobile Week-View v2.2 (Your Illustrator Layout) */
         @media (max-width: 600px) {
-            header { padding: 5px 10px; }
-            #calendar-grid { display: flex; flex-direction: column; background: var(--bg-color); gap: 5px; padding: 5px; }
+            #calendar-grid { display: flex; flex-direction: column; background: var(--bg-color); gap: 5px; padding: 5px; padding-bottom: 80px; }
             .day-header { display: none; }
             .day-cell { display: none; border-radius: 8px; border: 1px solid var(--border-color); }
-            
-            /* The "1" (Today Hero) */
             .day-cell.mobile-focus { display: flex; flex: 0 0 40%; background: rgba(0,123,255,0.08); border: 2px solid var(--accent); }
-            .day-cell.mobile-focus .day-number { font-size: 1.2rem; }
-            
-            /* The "6" (Grid) */
             .upcoming-container { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 5px; flex-grow: 1; }
             .day-cell.mobile-upcoming { display: flex; flex: 1; height: 100%; }
-
+            .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; display: flex; justify-content: space-around; padding: 12px; border-top: 2px solid var(--accent); z-index: 100; gap: 4px; }
+            .mobile-nav button { font-size: 0.6rem; padding: 8px 2px; flex: 1; }
             .pc-hide { display: none; }
-            .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; display: flex; justify-content: space-around; padding: 15px; border-top: 2px solid var(--accent); z-index: 100; }
         }
 
-        @media (min-width: 601px) {
-            .mobile-nav { display: none; }
-            .mobile-hide { display: none; }
-        }
-
+        @media (min-width: 601px) { .mobile-nav { display: none; } .mobile-hide { display: none; } }
         #stats-panel { background: #000; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: bold; border-top: 1px solid #333; }
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal { background: #1a1a1a; padding: 20px; border-radius: 12px; width: 90%; max-width: 340px; border: 1px solid #444; }
         .modal input { width: 100%; margin: 10px 0; background: #222; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 6px; }
         button { cursor: pointer; padding: 10px 16px; border-radius: 6px; border: none; background: #333; color: white; font-weight: bold; transition: 0.2s; }
-        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
+<div id="toast">Sync Successful!</div>
+
 <header>
     <div class="controls">
-        <button class="pc-hide" onclick="moveByStep(-1)">LAST WEEK</button>
+        <button class="pc-hide" onclick="moveByStep(-1)">PREV</button>
         <button onclick="goHome()" style="background:var(--accent)">HOME</button>
         <input type="date" id="gotoDate" class="mobile-hide" onchange="jumpToDate(this.value)" style="background:#222; color:#fff; border:1px solid #444; padding:5px; border-radius:4px; font-size:0.7rem;">
         <label style="font-size: 0.65rem; color: #a29bfe; cursor: pointer; display: flex; align-items: center; gap:4px;">
@@ -78,8 +69,10 @@
         <div id="monthLabel" style="font-size:0.8rem; font-weight:bold;"></div>
     </div>
     <div class="controls pc-hide">
-        <button onclick="moveByStep(1)">NEXT WEEK</button>
-        <button style="background:#444;" onclick="toggleTheme()">🌓</button>
+        <button onclick="document.getElementById('importFile').click()">IMPORT</button>
+        <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
+        <button onclick="downloadBackup()">BACKUP</button>
+        <button onclick="moveByStep(1)">NEXT</button>
     </div>
 </header>
 
@@ -87,17 +80,18 @@
 
 <div class="mobile-nav">
     <button onclick="moveByStep(-1)">PREV WEEK</button>
-    <button onclick="downloadBackup()" style="background:#444">BACKUP</button>
-    <input type="date" id="mobileGoto" onchange="jumpToDate(this.value)" style="width:40px; opacity:0.8;">
+    <button onclick="downloadBackup()">BACKUP</button>
+    <button onclick="document.getElementById('importFileMobile').click()" style="background:#444">IMPORT</button>
+    <input type="file" id="importFileMobile" style="display:none" onchange="importBackup(event)">
     <button onclick="moveByStep(1)">NEXT WEEK</button>
 </div>
 
 <div id="stats-panel">
     <div style="display:flex; gap:15px;">
-        <span style="color:var(--green); font-size: 0.9rem;">Gigs: $<span id="stat-income">0</span></span>
-        <span style="color:var(--red); font-size: 0.9rem;">Bills: $<span id="stat-debt">0</span></span>
+        <span style="color:var(--green);">Gigs: $<span id="stat-income">0</span></span>
+        <span style="color:var(--red);">Bills: $<span id="stat-debt">0</span></span>
     </div>
-    <div id="stat-net" style="font-size: 0.9rem;">Net: $0</div>
+    <div id="stat-net">Net: $0</div>
 </div>
 
 <div id="modal-overlay">
@@ -112,8 +106,8 @@
             <label><input type="checkbox" id="billCheck"> 💳 Bill</label>
             <label><input type="checkbox" id="recurCheck"> 🔄 Monthly</label>
         </div>
-        <button onclick="saveEvent()" style="background:var(--green); color:black; width:100%; margin-bottom:8px;">Save to App</button>
-        <button onclick="syncToGoogle()" style="background:#4285F4; width:100%; margin-bottom:8px;">📅 Sync to Google</button>
+        <button onclick="saveEvent()" style="background:var(--green); color:black; width:100%; margin-bottom:8px;">Save</button>
+        <button id="googleBtn" onclick="syncToGoogle()" style="background:#4285F4; width:100%; margin-bottom:8px; display:none;">📅 Sync Google</button>
         <button id="deleteBtn" onclick="deleteCurrentEvent()" style="background:var(--red); width:100%; display:none;">Delete</button>
         <button onclick="closeModal()" style="width:100%; background:transparent; border:1px solid #555; color:white; margin-top:5px;">Cancel</button>
     </div>
@@ -127,6 +121,13 @@
     let selectedColor = "#2ecc71";
 
     const presets = ["#ff9ff3", "#00d2d3", "#54a0ff", "#ff9f43", "#a29bfe", "#2ecc71", "#f1c40f", "#e74c3c", "#1dd1a1", "#48dbfb", "#ff6b6b", "#c8d6e5", "#576574", "#222f3e"];
+
+    function showToast(msg = "Sync Successful!") {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.top = "0";
+        setTimeout(() => { t.style.top = "-50px"; }, 2000);
+    }
 
     setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
 
@@ -164,7 +165,6 @@
         let totals = { income: 0, debt: 0 };
         const loopCount = isMobile ? 7 : 42;
 
-        // Mobile wrapper for the 3x2 grid
         let upcomingContainer = null;
         if (isMobile) {
             upcomingContainer = document.createElement('div');
@@ -175,14 +175,11 @@
             const day = new Date(startDay);
             day.setDate(day.getDate() + i);
             const dateStr = day.toISOString().split('T')[0];
-            const diff = Math.ceil((day - today) / 86400000);
-
             const cell = document.createElement('div');
             cell.className = 'day-cell';
             cell.innerHTML = `<div class="day-number" onclick="openModal('${dateStr}')">${day.getDate()} ${isMobile ? day.toLocaleDateString('en-US', {weekday: 'short'}) : ''}</div>`;
             
             if (dateStr === today.toISOString().split('T')[0]) cell.classList.add('today');
-
             if (isMobile) {
                 if (i === 0) cell.classList.add('mobile-focus');
                 else cell.classList.add('mobile-upcoming');
@@ -195,12 +192,11 @@
                 const div = document.createElement('div');
                 const amt = parseFloat(ev.amount) || 0;
                 if (ev.isBill) totals.debt += amt; else totals.income += amt;
-
                 div.className = 'event';
+                const diff = Math.ceil((day - today) / 86400000);
                 if (diff <= 1) div.classList.add('urgent-red');
                 else if (diff <= 2) div.classList.add('urgent-yellow');
                 else div.style.background = ev.color || '#2ecc71';
-
                 div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.title} ($${amt})`;
                 div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
                 cell.appendChild(div);
@@ -233,7 +229,49 @@
         document.getElementById('recurCheck').checked = event ? event.recurring : false;
         selectedColor = event ? event.color : "#2ecc71";
         document.getElementById('deleteBtn').style.display = event ? "block" : "none";
+        document.getElementById('googleBtn').style.display = event ? "block" : "none";
         document.getElementById('modal-overlay').style.display = 'flex';
+    }
+
+    function saveEvent() {
+        const title = document.getElementById('eventInput').value;
+        const amount = document.getElementById('amountInput').value;
+        const isBill = document.getElementById('billCheck').checked;
+        const recurring = document.getElementById('recurCheck').checked;
+        if (editingEventId) {
+            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, isBill, recurring, color: selectedColor } : e);
+        } else {
+            events.push({ id: Date.now(), date: selectedDateStr, title, amount, isBill, recurring, color: selectedColor });
+        }
+        localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
+        showToast("Event Saved!");
+        closeModal(); renderCalendar();
+    }
+
+    function deleteCurrentEvent() {
+        if(confirm("Delete item?")) {
+            events = events.filter(e => e.id !== editingEventId);
+            localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
+            showToast("Item Deleted");
+            closeModal(); renderCalendar();
+        }
+    }
+
+    function importBackup(event) {
+        const reader = new FileReader();
+        reader.onload = (e) => { 
+            events = JSON.parse(e.target.result); 
+            localStorage.setItem('djFinance_v2.2', JSON.stringify(events)); 
+            showToast("Import Successful!");
+            renderCalendar(); 
+        };
+        reader.readAsText(event.target.files[0]);
+    }
+
+    function downloadBackup() {
+        const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.2.2_backup.json`; a.click();
+        showToast("Backup Downloaded");
     }
 
     function moveByStep(n) {
@@ -246,44 +284,10 @@
     function goHome() { currentViewDate = new Date(); renderCalendar(); }
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
     function toggleTheme() { document.body.classList.toggle('light-mode'); }
-    
-    function saveEvent() {
-        const title = document.getElementById('eventInput').value;
-        const amount = document.getElementById('amountInput').value;
-        const isBill = document.getElementById('billCheck').checked;
-        const recurring = document.getElementById('recurCheck').checked;
-        if (editingEventId) {
-            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, isBill, recurring, color: selectedColor } : e);
-        } else {
-            events.push({ id: Date.now(), date: selectedDateStr, title, amount, isBill, recurring, color: selectedColor });
-        }
-        localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
-        closeModal(); renderCalendar();
-    }
-
-    function deleteCurrentEvent() {
-        if(confirm("Delete item?")) {
-            events = events.filter(e => e.id !== editingEventId);
-            localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
-            closeModal(); renderCalendar();
-        }
-    }
-
     function syncToGoogle() {
         const date = selectedDateStr.replace(/-/g, '');
         const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(document.getElementById('eventInput').value)}&dates=${date}/${date}&details=${encodeURIComponent('Amount: $' + document.getElementById('amountInput').value)}`;
         window.open(url, '_blank');
-    }
-
-    function downloadBackup() {
-        const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.2_backup.json`; a.click();
-    }
-    
-    function importBackup(event) {
-        const reader = new FileReader();
-        reader.onload = (e) => { events = JSON.parse(e.target.result); localStorage.setItem('djFinance_v2.2', JSON.stringify(events)); renderCalendar(); };
-        reader.readAsText(event.target.files[0]);
     }
 
     window.onload = () => { initColorGrid(); renderCalendar(); };
