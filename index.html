@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.2.6</title>
+    <title>Pro DJ & Finance v2.2.7</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -41,21 +41,20 @@
             .day-header { display: none; }
             .day-cell { display: none; border-radius: 10px; border: 1px solid var(--border-color); }
             .day-cell.mobile-focus { display: flex; flex: 0 0 42%; background: rgba(0,123,255,0.1); border: 2.5px solid var(--accent); }
-            .day-cell.mobile-focus .day-number { font-size: 1.3rem; }
-            .upcoming-container { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 6px; flex-grow: 1; }
             .day-cell.mobile-upcoming { display: flex; flex: 1; height: 100%; border-radius: 8px; }
+            .upcoming-container { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 6px; flex-grow: 1; }
             .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; display: flex; justify-content: space-around; padding: 15px; border-top: 3px solid var(--accent); z-index: 1000; gap: 5px; }
             .mobile-nav button { font-size: 0.65rem; padding: 10px 4px; flex: 1; }
             .pc-hide { display: none; }
         }
 
         @media (min-width: 601px) { .mobile-nav { display: none; } .mobile-hide { display: none; } }
-        #stats-panel { background: #000; padding: 10px 20px; display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 800; border-top: 1px solid #333; }
+        #stats-panel { background: #000; padding: 10px 20px; display: flex; flex-direction: column; gap: 5px; font-size: 0.9rem; font-weight: 800; border-top: 1px solid #333; }
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        .modal { background: #1a1a1a; padding: 25px; border-radius: 15px; width: 92%; max-width: 350px; border: 1px solid #555; }
-        .modal input { width: 100%; margin: 12px 0; background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 14px; border-radius: 8px; font-size: 1rem; }
+        .modal { background: #1a1a1a; padding: 25px; border-radius: 15px; width: 92%; max-width: 380px; border: 1px solid #555; }
+        .modal input, .modal textarea { width: 100%; margin: 8px 0; background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        .modal textarea { height: 80px; resize: none; }
         button { cursor: pointer; padding: 10px 14px; border-radius: 6px; border: none; background: #333; color: white; font-weight: bold; transition: 0.3s; }
-        .btn-fullscreen { background: #555; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -66,7 +65,7 @@
     <div class="controls">
         <button class="pc-hide" onclick="moveByStep(-1)">PREV</button>
         <button onclick="goHome()" style="background:var(--accent)">HOME</button>
-        <button class="btn-fullscreen mobile-hide" onclick="toggleFullscreen()">🔲 FULLSCREEN</button>
+        <button style="background: #555; font-size: 0.7rem;" class="mobile-hide" onclick="toggleFullscreen()">🔲 FULLSCREEN</button>
         <button style="background:#444;" onclick="toggleTheme()">🌓</button>
         <label style="font-size: 0.7rem; color: #a29bfe; cursor: pointer; display: flex; align-items: center; gap:5px; font-weight: bold;">
             <input type="checkbox" id="filterBillCheck" onchange="renderCalendar()"> 💳 BILLS
@@ -95,27 +94,31 @@
 </div>
 
 <div id="stats-panel">
-    <div style="display:flex; gap:20px;">
-        <span style="color:var(--green);">Gigs: $<span id="stat-income">0</span></span>
-        <span style="color:var(--red);">Bills: $<span id="stat-debt">0</span></span>
+    <div style="display:flex; justify-content:space-between; width:100%;">
+        <div style="display:flex; gap:20px;">
+            <span style="color:var(--green);">Gigs: $<span id="stat-income">0</span></span>
+            <span style="color:var(--red);">Bills: $<span id="stat-debt">0</span></span>
+        </div>
+        <div id="stat-net">Net: $0</div>
     </div>
-    <div id="stat-net">Net: $0</div>
+    <div style="font-size: 0.65rem; color: #666; font-weight: 400; align-self: flex-end;">Last Modified: <span id="lastModifiedDisplay">Never</span></div>
 </div>
 
 <div id="modal-overlay">
     <div class="modal">
         <h3 id="modalTitle" style="margin:0; color:white;">Edit/Add</h3>
-        <p id="dateDisplay" style="font-size: 0.85rem; color: #aaa; margin: 8px 0;"></p>
-        <input type="text" id="eventInput" placeholder="Name">
+        <p id="dateDisplay" style="font-size: 0.85rem; color: #aaa; margin: 4px 0;"></p>
+        <input type="text" id="eventInput" placeholder="Event Name">
         <input type="number" id="amountInput" placeholder="Amount ($)">
-        <div id="colorPickerGrid" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin:15px 0;"></div>
-        <input type="color" id="customColor" style="width:100%; height:40px; margin-bottom:15px; border:none; background:none;">
-        <div style="font-size: 1rem; margin-bottom: 15px; display: flex; gap: 25px; color:white; font-weight: bold;">
+        <textarea id="notesInput" placeholder="Notes (Dr. Boholst address, set list...)"></textarea>
+        <div id="colorPickerGrid" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin:10px 0;"></div>
+        <input type="color" id="customColor" style="width:100%; height:35px; margin-bottom:10px; border:none; background:none;">
+        <div style="font-size: 0.9rem; margin-bottom: 10px; display: flex; gap: 20px; color:white; font-weight: bold;">
             <label><input type="checkbox" id="billCheck"> 💳 Bill</label>
             <label><input type="checkbox" id="recurCheck"> 🔄 Monthly</label>
         </div>
-        <button onclick="saveEvent()" style="background:var(--green); color:black; width:100%; margin-bottom:10px;">Save</button>
-        <button id="googleBtn" onclick="syncToGoogle()" style="background:#4285F4; width:100%; margin-bottom:10px; display:none;">📅 Sync Google</button>
+        <button onclick="saveEvent()" style="background:var(--green); color:black; width:100%; margin-bottom:8px;">Save</button>
+        <button id="googleBtn" onclick="syncToGoogle()" style="background:#4285F4; width:100%; margin-bottom:8px; display:none;">📅 Sync Google</button>
         <button id="deleteBtn" onclick="deleteCurrentEvent()" style="background:var(--red); width:100%; display:none;">Delete</button>
         <button onclick="closeModal()" style="width:100%; background:transparent; border:1px solid #777; color:white; margin-top:5px;">Cancel</button>
     </div>
@@ -124,11 +127,18 @@
 <script>
     let currentViewDate = new Date();
     let events = JSON.parse(localStorage.getItem('djFinance_v2.2')) || [];
+    let lastModified = localStorage.getItem('djFinance_modified') || "Never";
     let editingEventId = null;
     let selectedDateStr = "";
     let selectedColor = "#2ecc71";
 
     const presets = ["#ff9ff3", "#00d2d3", "#54a0ff", "#ff9f43", "#a29bfe", "#2ecc71", "#f1c40f", "#e74c3c", "#1dd1a1", "#48dbfb", "#ff6b6b", "#c8d6e5", "#576574", "#222f3e"];
+
+    function updateModifiedTimestamp() {
+        lastModified = new Date().toLocaleString();
+        localStorage.setItem('djFinance_modified', lastModified);
+        document.getElementById('lastModifiedDisplay').innerText = lastModified;
+    }
 
     function showToast(msg = "Sync Successful!") {
         const t = document.getElementById('toast');
@@ -172,6 +182,7 @@
         const isMobile = window.innerWidth <= 600;
 
         document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
+        document.getElementById('lastModifiedDisplay').innerText = lastModified;
 
         if (!isMobile) {
             ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
@@ -184,12 +195,8 @@
 
         let totals = { income: 0, debt: 0 };
         const loopCount = isMobile ? 7 : 42;
-
-        let upcomingContainer = null;
-        if (isMobile) {
-            upcomingContainer = document.createElement('div');
-            upcomingContainer.className = 'upcoming-container';
-        }
+        let upcomingContainer = isMobile ? document.createElement('div') : null;
+        if (isMobile) upcomingContainer.className = 'upcoming-container';
 
         for (let i = 0; i < loopCount; i++) {
             const day = new Date(startDay);
@@ -214,18 +221,14 @@
                 if (ev.isBill) totals.debt += amt; else totals.income += amt;
                 div.className = 'event';
                 const diff = Math.ceil((day - today) / 86400000);
-                
                 div.style.backgroundColor = ev.color || '#2ecc71';
                 div.style.setProperty('--event-color', ev.color || '#2ecc71');
-
                 if (diff <= 1) div.classList.add('urgent-red');
                 else if (diff <= 2) div.classList.add('urgent-yellow');
-                
                 div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.title} ($${amt})`;
                 div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
                 cell.appendChild(div);
             });
-
             if (isMobile && i > 0) upcomingContainer.appendChild(cell);
             else grid.appendChild(cell);
         }
@@ -249,6 +252,7 @@
         document.getElementById('dateDisplay').innerText = new Date(date + "T00:00:00").toDateString();
         document.getElementById('eventInput').value = event ? event.title : "";
         document.getElementById('amountInput').value = event ? event.amount : "";
+        document.getElementById('notesInput').value = event ? (event.notes || "") : "";
         document.getElementById('billCheck').checked = event ? event.isBill : false;
         document.getElementById('recurCheck').checked = event ? event.recurring : false;
         selectedColor = event ? event.color : "#2ecc71";
@@ -260,14 +264,16 @@
     function saveEvent() {
         const title = document.getElementById('eventInput').value;
         const amount = document.getElementById('amountInput').value;
+        const notes = document.getElementById('notesInput').value;
         const isBill = document.getElementById('billCheck').checked;
         const recurring = document.getElementById('recurCheck').checked;
         if (editingEventId) {
-            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, isBill, recurring, color: selectedColor } : e);
+            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, notes, isBill, recurring, color: selectedColor } : e);
         } else {
-            events.push({ id: Date.now(), date: selectedDateStr, title, amount, isBill, recurring, color: selectedColor });
+            events.push({ id: Date.now(), date: selectedDateStr, title, amount, notes, isBill, recurring, color: selectedColor });
         }
         localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
+        updateModifiedTimestamp();
         showToast("Event Saved!");
         closeModal(); renderCalendar();
     }
@@ -276,6 +282,7 @@
         if(confirm("Delete item?")) {
             events = events.filter(e => e.id !== editingEventId);
             localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
+            updateModifiedTimestamp();
             showToast("Item Deleted");
             closeModal(); renderCalendar();
         }
@@ -286,6 +293,7 @@
         reader.onload = (e) => { 
             events = JSON.parse(e.target.result); 
             localStorage.setItem('djFinance_v2.2', JSON.stringify(events)); 
+            updateModifiedTimestamp();
             showToast("Import Successful!");
             renderCalendar(); 
         };
@@ -294,7 +302,7 @@
 
     function downloadBackup() {
         const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.2.6_backup.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.2.7_backup.json`; a.click();
         showToast("Backup Saved!");
     }
 
@@ -310,7 +318,8 @@
     function toggleTheme() { document.body.classList.toggle('light-mode'); }
     function syncToGoogle() {
         const date = selectedDateStr.replace(/-/g, '');
-        const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(document.getElementById('eventInput').value)}&dates=${date}/${date}&details=${encodeURIComponent('Amount: $' + document.getElementById('amountInput').value)}`;
+        const details = `Amount: $${document.getElementById('amountInput').value}\nNotes: ${document.getElementById('notesInput').value}`;
+        const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(document.getElementById('eventInput').value)}&dates=${date}/${date}&details=${encodeURIComponent(details)}`;
         window.open(url, '_blank');
     }
 
