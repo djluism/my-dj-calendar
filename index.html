@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.2.7</title>
+    <title>Pro DJ & Finance v2.2.8</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -15,8 +15,13 @@
 
         #toast { position: fixed; top: -70px; left: 50%; transform: translateX(-50%); background: var(--green); color: #000; padding: 15px 35px; border-radius: 0 0 15px 15px; font-weight: 800; font-size: 1rem; z-index: 10000; transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 8px 25px rgba(0,0,0,0.7); border: 2px solid #000; text-transform: uppercase; }
 
-        header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 10px 15px; background: #000; border-bottom: 2px solid var(--accent); z-index: 100; }
+        header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 8px 10px; background: #000; border-bottom: 2px solid var(--accent); z-index: 100; gap: 5px; }
         body.light-mode header { background: #eee; }
+
+        /* Restored Search & Date Inputs */
+        .search-group { display: flex; gap: 5px; align-items: center; }
+        #searchInput { background: #222; border: 1px solid #444; color: white; padding: 6px; border-radius: 4px; font-size: 0.75rem; width: 80px; }
+        #gotoDate { background: #222; border: 1px solid #444; color: white; padding: 5px; border-radius: 4px; font-size: 0.75rem; }
 
         #calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(5, 1fr); flex-grow: 1; background: var(--border-color); gap: 1px; }
         .day-header { background: #000; text-align: center; padding: 10px; font-weight: bold; color: #888; font-size: 0.7rem; }
@@ -40,12 +45,19 @@
             #calendar-grid { display: flex; flex-direction: column; background: var(--bg-color); gap: 5px; padding: 5px; padding-bottom: 85px; }
             .day-header { display: none; }
             .day-cell { display: none; border-radius: 10px; border: 1px solid var(--border-color); }
+            
             .day-cell.mobile-focus { display: flex; flex: 0 0 42%; background: rgba(0,123,255,0.1); border: 2.5px solid var(--accent); }
-            .day-cell.mobile-upcoming { display: flex; flex: 1; height: 100%; border-radius: 8px; }
+            .day-cell.mobile-focus .day-number { font-size: 1.3rem; padding: 5px 10px; background: rgba(0,0,0,0.5); }
+            
             .upcoming-container { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 6px; flex-grow: 1; }
+            .day-cell.mobile-upcoming { display: flex; flex: 1; height: 100%; border-radius: 8px; }
+            
             .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; display: flex; justify-content: space-around; padding: 15px; border-top: 3px solid var(--accent); z-index: 1000; gap: 5px; }
             .mobile-nav button { font-size: 0.65rem; padding: 10px 4px; flex: 1; }
             .pc-hide { display: none; }
+            .search-group { width: 100%; justify-content: space-between; margin-top: 5px; }
+            #searchInput { width: 45%; }
+            #gotoDate { width: 45%; }
         }
 
         @media (min-width: 601px) { .mobile-nav { display: none; } .mobile-hide { display: none; } }
@@ -55,6 +67,7 @@
         .modal input, .modal textarea { width: 100%; margin: 8px 0; background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
         .modal textarea { height: 80px; resize: none; }
         button { cursor: pointer; padding: 10px 14px; border-radius: 6px; border: none; background: #333; color: white; font-weight: bold; transition: 0.3s; }
+        .btn-fullscreen { background: #555; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -65,16 +78,15 @@
     <div class="controls">
         <button class="pc-hide" onclick="moveByStep(-1)">PREV</button>
         <button onclick="goHome()" style="background:var(--accent)">HOME</button>
-        <button style="background: #555; font-size: 0.7rem;" class="mobile-hide" onclick="toggleFullscreen()">🔲 FULLSCREEN</button>
+        <button class="btn-fullscreen mobile-hide" onclick="toggleFullscreen()">🔲 FULL</button>
         <button style="background:#444;" onclick="toggleTheme()">🌓</button>
-        <label style="font-size: 0.7rem; color: #a29bfe; cursor: pointer; display: flex; align-items: center; gap:5px; font-weight: bold;">
-            <input type="checkbox" id="filterBillCheck" onchange="renderCalendar()"> 💳 BILLS
-        </label>
     </div>
-    <div style="text-align: center;">
-        <div id="clock" style="font-family:monospace; color:var(--accent); font-size:1.2rem; font-weight: bold;">00:00:00</div>
-        <div id="monthLabel" style="font-size:0.9rem; font-weight:900; text-transform: uppercase;"></div>
+    
+    <div class="search-group">
+        <input type="text" id="searchInput" placeholder="Search..." oninput="renderCalendar()">
+        <input type="date" id="gotoDate" onchange="jumpToDate(this.value)">
     </div>
+
     <div class="controls pc-hide">
         <button onclick="document.getElementById('importFile').click()">IMPORT</button>
         <input type="file" id="importFile" style="display:none" onchange="importBackup(event)">
@@ -110,7 +122,7 @@
         <p id="dateDisplay" style="font-size: 0.85rem; color: #aaa; margin: 4px 0;"></p>
         <input type="text" id="eventInput" placeholder="Event Name">
         <input type="number" id="amountInput" placeholder="Amount ($)">
-        <textarea id="notesInput" placeholder="Notes (Dr. Boholst address, set list...)"></textarea>
+        <textarea id="notesInput" placeholder="Notes..."></textarea>
         <div id="colorPickerGrid" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin:10px 0;"></div>
         <input type="color" id="customColor" style="width:100%; height:35px; margin-bottom:10px; border:none; background:none;">
         <div style="font-size: 0.9rem; margin-bottom: 10px; display: flex; gap: 20px; color:white; font-weight: bold;">
@@ -159,7 +171,9 @@
         }
     }
 
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+    setInterval(() => { 
+        // Simple header date update
+    }, 1000);
 
     function initColorGrid() {
         const grid = document.getElementById('colorPickerGrid');
@@ -178,11 +192,8 @@
         const grid = document.getElementById('calendar-grid');
         grid.innerHTML = "";
         const today = new Date(); today.setHours(0,0,0,0);
-        const filterBills = document.getElementById('filterBillCheck').checked;
         const isMobile = window.innerWidth <= 600;
-
-        document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
-        document.getElementById('lastModifiedDisplay').innerText = lastModified;
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
 
         if (!isMobile) {
             ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
@@ -204,7 +215,9 @@
             const dateStr = day.toISOString().split('T')[0];
             const cell = document.createElement('div');
             cell.className = 'day-cell';
-            cell.innerHTML = `<div class="day-number" onclick="openModal('${dateStr}')">${day.getDate()} ${isMobile ? day.toLocaleDateString('en-US', {weekday: 'short'}) : ''}</div>`;
+            
+            // CLICK TO FOCUS LOGIC
+            cell.innerHTML = `<div class="day-number" onclick="jumpToDate('${dateStr}'); event.stopPropagation();">${day.getDate()} ${isMobile ? day.toLocaleDateString('en-US', {weekday: 'short'}) : ''}</div>`;
             
             if (dateStr === today.toISOString().split('T')[0]) cell.classList.add('today');
             if (isMobile) {
@@ -214,7 +227,8 @@
 
             events.filter(e => {
                 const isMatch = e.date === dateStr || (e.recurring && parseInt(e.date.split('-')[2]) === day.getDate());
-                return isMatch && (filterBills ? e.isBill : true);
+                const matchesSearch = e.title.toLowerCase().includes(searchTerm);
+                return isMatch && matchesSearch;
             }).forEach(ev => {
                 const div = document.createElement('div');
                 const amt = parseFloat(ev.amount) || 0;
@@ -302,7 +316,8 @@
 
     function downloadBackup() {
         const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `v2.2.7_backup.json`; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `dj_finance_master.json`; // Fixed filename for easy overwriting
+        a.click();
         showToast("Backup Saved!");
     }
 
