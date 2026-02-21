@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.3.0</title>
+    <title>Pro DJ & Finance v2.3.1</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -37,7 +37,9 @@
         @keyframes oc-pulse-red { 0% { background-color: var(--red); } 50% { background-color: var(--event-color); color: #000; } 100% { background-color: var(--red); } }
         @keyframes oc-pulse-yellow { 0% { background-color: var(--yellow); } 50% { background-color: var(--event-color); } 100% { background-color: var(--yellow); } }
 
+        /* Media Queries Fixed for Desktop/Mobile Element Hiding */
         @media (max-width: 600px) {
+            .mobile-hide { display: none !important; }
             #calendar-grid { display: flex; flex-direction: column; background: var(--bg-color); gap: 5px; padding: 5px; padding-bottom: 85px; }
             .day-header { display: none; }
             .day-cell { display: none; border-radius: 10px; border: 1px solid var(--border-color); }
@@ -47,13 +49,16 @@
             .day-cell.mobile-upcoming { display: flex; flex: 1; height: 100%; border-radius: 8px; }
             .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; display: flex; justify-content: space-around; padding: 15px; border-top: 3px solid var(--accent); z-index: 1000; gap: 5px; }
             .mobile-nav button { font-size: 0.65rem; padding: 10px 4px; flex: 1; }
-            .pc-hide { display: none; }
             .search-group { width: 100%; justify-content: space-between; margin-top: 5px; }
             #searchInput { width: 45%; }
             #gotoDate { width: 45%; }
         }
 
-        @media (min-width: 601px) { .mobile-nav { display: none; } .mobile-hide { display: none; } }
+        @media (min-width: 601px) { 
+            .pc-hide { display: none !important; }
+            .mobile-nav { display: none !important; } 
+        }
+
         #stats-panel { background: #000; padding: 10px 20px; display: flex; flex-direction: column; gap: 5px; font-size: 0.9rem; font-weight: 800; border-top: 1px solid #333; }
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 2000; }
         .modal { background: #1a1a1a; padding: 25px; border-radius: 15px; width: 92%; max-width: 380px; border: 1px solid #555; }
@@ -72,13 +77,18 @@
     <div class="controls">
         <button class="pc-hide" onclick="moveByStep(-1)">PREV</button>
         <button onclick="goHome()" style="background:var(--accent)">HOME</button>
-        <button class="btn-fullscreen mobile-hide" onclick="toggleFullscreen()">🔲 FULL</button>
+        <button class="btn-fullscreen mobile-hide" onclick="toggleFullscreen()">🔲 FULLSCREEN</button>
         <button style="background:#444;" onclick="toggleTheme()">🌓</button>
     </div>
     
     <div class="search-group">
         <input type="text" id="searchInput" placeholder="Search..." oninput="renderCalendar()">
         <input type="date" id="gotoDate" onchange="jumpToDate(this.value)">
+    </div>
+
+    <div style="text-align: center;" class="mobile-hide">
+        <div id="clock" style="font-family:monospace; color:var(--accent); font-size:1.2rem; font-weight: bold;">00:00:00</div>
+        <div id="monthLabel" style="font-size:0.9rem; font-weight:900; text-transform: uppercase;"></div>
     </div>
 
     <div class="controls" style="display: flex; gap: 10px; align-items: center;">
@@ -194,7 +204,10 @@
         const filterBills = document.getElementById('filterBillCheck').checked;
         const filterCards = document.getElementById('filterCardCheck').checked;
 
-        document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
+        // Clock safety check
+        if(document.getElementById('monthLabel')) {
+            document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
+        }
         document.getElementById('lastModifiedDisplay').innerText = lastModified;
 
         if (!isMobile) {
@@ -231,7 +244,6 @@
                 const isMatch = e.date === dateStr || (e.recurring && parseInt(e.date.split('-')[2]) === day.getDate());
                 const matchesSearch = e.title.toLowerCase().includes(searchTerm);
                 
-                // Advanced Filter Logic for Bills vs Cards
                 let typeMatch = true;
                 if (filterBills || filterCards) {
                     typeMatch = (filterBills && e.isBill) || (filterCards && e.isCard);
@@ -242,7 +254,6 @@
                 const div = document.createElement('div');
                 const amt = parseFloat(ev.amount) || 0;
                 
-                // Calculate Debt for either Bill or Card
                 if (ev.isBill || ev.isCard) totals.debt += amt; else totals.income += amt;
                 
                 div.className = 'event';
@@ -279,92 +290,3 @@
         document.getElementById('modalTitle').innerText = event ? "Edit" : "Add";
         document.getElementById('dateDisplay').innerText = new Date(date + "T00:00:00").toDateString();
         document.getElementById('eventInput').value = event ? event.title : "";
-        document.getElementById('amountInput').value = event ? event.amount : "";
-        document.getElementById('notesInput').value = event ? (event.notes || "") : "";
-        document.getElementById('billCheck').checked = event ? event.isBill : false;
-        document.getElementById('cardCheck').checked = event ? (event.isCard || false) : false;
-        document.getElementById('recurCheck').checked = event ? event.recurring : false;
-        selectedColor = event ? event.color : "#2ecc71";
-        
-        document.getElementById('deleteBtn').style.display = event ? "block" : "none";
-        document.getElementById('duplicateBtn').style.display = event ? "block" : "none";
-        document.getElementById('googleBtn').style.display = event ? "block" : "none";
-        document.getElementById('modal-overlay').style.display = 'flex';
-    }
-
-    function saveEvent() {
-        const title = document.getElementById('eventInput').value;
-        const amount = document.getElementById('amountInput').value;
-        const notes = document.getElementById('notesInput').value;
-        const isBill = document.getElementById('billCheck').checked;
-        const isCard = document.getElementById('cardCheck').checked;
-        const recurring = document.getElementById('recurCheck').checked;
-        
-        if (editingEventId) {
-            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, notes, isBill, isCard, recurring, color: selectedColor } : e);
-        } else {
-            events.push({ id: Date.now(), date: selectedDateStr, title, amount, notes, isBill, isCard, recurring, color: selectedColor });
-        }
-        localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
-        updateModifiedTimestamp();
-        showToast("Event Saved!");
-        closeModal(); renderCalendar();
-    }
-
-    function duplicateEvent() {
-        editingEventId = null; // Clears the ID so saveEvent creates a new entry instead of updating
-        saveEvent();
-        showToast("Event Copied!");
-    }
-
-    function deleteCurrentEvent() {
-        if(confirm("Delete item?")) {
-            events = events.filter(e => e.id !== editingEventId);
-            localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
-            updateModifiedTimestamp();
-            showToast("Item Deleted");
-            closeModal(); renderCalendar();
-        }
-    }
-
-    function importBackup(event) {
-        const reader = new FileReader();
-        reader.onload = (e) => { 
-            events = JSON.parse(e.target.result); 
-            localStorage.setItem('djFinance_v2.2', JSON.stringify(events)); 
-            updateModifiedTimestamp();
-            showToast("Import Successful!");
-            renderCalendar(); 
-        };
-        reader.readAsText(event.target.files[0]);
-    }
-
-    function downloadBackup() {
-        const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `dj_finance_master.json`; 
-        a.click();
-        showToast("Backup Saved!");
-    }
-
-    function moveByStep(n) {
-        if (window.innerWidth <= 600) currentViewDate.setDate(currentViewDate.getDate() + (n * 7));
-        else currentViewDate.setMonth(currentViewDate.getMonth() + n);
-        renderCalendar();
-    }
-
-    function jumpToDate(val) { if(val) { currentViewDate = new Date(val + "T00:00:00"); renderCalendar(); } }
-    function goHome() { currentViewDate = new Date(); renderCalendar(); }
-    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-    function toggleTheme() { document.body.classList.toggle('light-mode'); }
-    function syncToGoogle() {
-        const date = selectedDateStr.replace(/-/g, '');
-        const details = `Amount: $${document.getElementById('amountInput').value}\nNotes: ${document.getElementById('notesInput').value}`;
-        const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(document.getElementById('eventInput').value)}&dates=${date}/${date}&details=${encodeURIComponent(details)}`;
-        window.open(url, '_blank');
-    }
-
-    window.onload = () => { initColorGrid(); renderCalendar(); };
-    window.onresize = renderCalendar;
-</script>
-</body>
-</html>
