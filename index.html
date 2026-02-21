@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.2.9</title>
+    <title>Pro DJ & Finance v2.3.0</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -31,33 +31,20 @@
 
         .event { position: relative; margin: 3px 0; padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; color: #000; border: 1px solid rgba(0,0,0,0.2); transition: background 0.3s; }
         
-        /* v2.2.9 Dual Animation System */
         .urgent-red { animation: oc-pulse-red 2s infinite; border: 2px solid #fff; color: #fff !important; }
         .urgent-yellow { animation: oc-pulse-yellow 4s infinite; border: 1.5px solid #000; color: #000 !important; }
 
-        @keyframes oc-pulse-red { 
-            0% { background-color: var(--red); }
-            50% { background-color: var(--event-color); color: #000; } 
-            100% { background-color: var(--red); }
-        }
-
-        @keyframes oc-pulse-yellow { 
-            0% { background-color: var(--yellow); }
-            50% { background-color: var(--event-color); } 
-            100% { background-color: var(--yellow); }
-        }
+        @keyframes oc-pulse-red { 0% { background-color: var(--red); } 50% { background-color: var(--event-color); color: #000; } 100% { background-color: var(--red); } }
+        @keyframes oc-pulse-yellow { 0% { background-color: var(--yellow); } 50% { background-color: var(--event-color); } 100% { background-color: var(--yellow); } }
 
         @media (max-width: 600px) {
             #calendar-grid { display: flex; flex-direction: column; background: var(--bg-color); gap: 5px; padding: 5px; padding-bottom: 85px; }
             .day-header { display: none; }
             .day-cell { display: none; border-radius: 10px; border: 1px solid var(--border-color); }
-            
             .day-cell.mobile-focus { display: flex; flex: 0 0 42%; background: rgba(0,123,255,0.1); border: 2.5px solid var(--accent); }
             .day-cell.mobile-focus .day-number { font-size: 1.3rem; padding: 5px 10px; background: rgba(0,0,0,0.5); }
-            
             .upcoming-container { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 6px; flex-grow: 1; }
             .day-cell.mobile-upcoming { display: flex; flex: 1; height: 100%; border-radius: 8px; }
-            
             .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #000; display: flex; justify-content: space-around; padding: 15px; border-top: 3px solid var(--accent); z-index: 1000; gap: 5px; }
             .mobile-nav button { font-size: 0.65rem; padding: 10px 4px; flex: 1; }
             .pc-hide { display: none; }
@@ -71,9 +58,10 @@
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 2000; }
         .modal { background: #1a1a1a; padding: 25px; border-radius: 15px; width: 92%; max-width: 380px; border: 1px solid #555; }
         .modal input, .modal textarea { width: 100%; margin: 8px 0; background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
-        .modal textarea { height: 80px; resize: none; }
+        .modal textarea { height: 60px; resize: none; }
         button { cursor: pointer; padding: 10px 14px; border-radius: 6px; border: none; background: #333; color: white; font-weight: bold; transition: 0.3s; }
         .btn-fullscreen { background: #555; font-size: 0.7rem; }
+        .btn-duplicate { background: #666; color: white; width: 100%; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -91,6 +79,15 @@
     <div class="search-group">
         <input type="text" id="searchInput" placeholder="Search..." oninput="renderCalendar()">
         <input type="date" id="gotoDate" onchange="jumpToDate(this.value)">
+    </div>
+
+    <div class="controls" style="display: flex; gap: 10px; align-items: center;">
+        <label style="font-size: 0.65rem; color: #a29bfe; cursor: pointer; font-weight: bold;">
+            <input type="checkbox" id="filterBillCheck" onchange="renderCalendar()"> 🧾 BILLS
+        </label>
+        <label style="font-size: 0.65rem; color: #f1c40f; cursor: pointer; font-weight: bold;">
+            <input type="checkbox" id="filterCardCheck" onchange="renderCalendar()"> 💳 CARDS
+        </label>
     </div>
 
     <div class="controls pc-hide">
@@ -115,7 +112,7 @@
     <div style="display:flex; justify-content:space-between; width:100%;">
         <div style="display:flex; gap:20px;">
             <span style="color:var(--green);">Gigs: $<span id="stat-income">0</span></span>
-            <span style="color:var(--red);">Bills: $<span id="stat-debt">0</span></span>
+            <span style="color:var(--red);">Owed: $<span id="stat-debt">0</span></span>
         </div>
         <div id="stat-net">Net: $0</div>
     </div>
@@ -131,11 +128,15 @@
         <textarea id="notesInput" placeholder="Notes..."></textarea>
         <div id="colorPickerGrid" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin:10px 0;"></div>
         <input type="color" id="customColor" style="width:100%; height:35px; margin-bottom:10px; border:none; background:none;">
-        <div style="font-size: 0.9rem; margin-bottom: 10px; display: flex; gap: 20px; color:white; font-weight: bold;">
-            <label><input type="checkbox" id="billCheck"> 💳 Bill</label>
+        
+        <div style="font-size: 0.85rem; margin-bottom: 15px; display: flex; gap: 15px; flex-wrap: wrap; color:white; font-weight: bold;">
+            <label><input type="checkbox" id="billCheck"> 🧾 Bill</label>
+            <label><input type="checkbox" id="cardCheck"> 💳 Card</label>
             <label><input type="checkbox" id="recurCheck"> 🔄 Monthly</label>
         </div>
+        
         <button onclick="saveEvent()" style="background:var(--green); color:black; width:100%; margin-bottom:8px;">Save</button>
+        <button id="duplicateBtn" class="btn-duplicate" onclick="duplicateEvent()" style="display:none;">Copy / Duplicate</button>
         <button id="googleBtn" onclick="syncToGoogle()" style="background:#4285F4; width:100%; margin-bottom:8px; display:none;">📅 Sync Google</button>
         <button id="deleteBtn" onclick="deleteCurrentEvent()" style="background:var(--red); width:100%; display:none;">Delete</button>
         <button onclick="closeModal()" style="width:100%; background:transparent; border:1px solid #777; color:white; margin-top:5px;">Cancel</button>
@@ -144,7 +145,6 @@
 
 <script>
     let currentViewDate = new Date();
-    // Keeping v2.2 storage key so you don't lose data and don't have to re-import!
     let events = JSON.parse(localStorage.getItem('djFinance_v2.2')) || [];
     let lastModified = localStorage.getItem('djFinance_modified') || "Never";
     let editingEventId = null;
@@ -167,15 +167,8 @@
     }
 
     function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-            showToast("Entering Fullscreen");
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-                showToast("Exiting Fullscreen");
-            }
-        }
+        if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); showToast("Entering Fullscreen"); } 
+        else { if (document.exitFullscreen) { document.exitFullscreen(); showToast("Exiting Fullscreen"); } }
     }
 
     function initColorGrid() {
@@ -197,6 +190,12 @@
         const today = new Date(); today.setHours(0,0,0,0);
         const isMobile = window.innerWidth <= 600;
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        
+        const filterBills = document.getElementById('filterBillCheck').checked;
+        const filterCards = document.getElementById('filterCardCheck').checked;
+
+        document.getElementById('monthLabel').innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentViewDate);
+        document.getElementById('lastModifiedDisplay').innerText = lastModified;
 
         if (!isMobile) {
             ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
@@ -219,12 +218,7 @@
             const cell = document.createElement('div');
             cell.className = 'day-cell';
             
-            // v2.2.9 SMART CLICK LOGIC
-            // PC: Always opens Add Item modal
-            // Mobile Focus (i===0): Opens Add Item modal
-            // Mobile Upcoming (i>0): Jumps to that date
             const clickAction = (isMobile && i > 0) ? `jumpToDate('${dateStr}')` : `openModal('${dateStr}')`;
-            
             cell.innerHTML = `<div class="day-number" onclick="${clickAction}; event.stopPropagation();">${day.getDate()} ${isMobile ? day.toLocaleDateString('en-US', {weekday: 'short'}) : ''}</div>`;
             
             if (dateStr === today.toISOString().split('T')[0]) cell.classList.add('today');
@@ -236,17 +230,26 @@
             events.filter(e => {
                 const isMatch = e.date === dateStr || (e.recurring && parseInt(e.date.split('-')[2]) === day.getDate());
                 const matchesSearch = e.title.toLowerCase().includes(searchTerm);
-                return isMatch && matchesSearch;
+                
+                // Advanced Filter Logic for Bills vs Cards
+                let typeMatch = true;
+                if (filterBills || filterCards) {
+                    typeMatch = (filterBills && e.isBill) || (filterCards && e.isCard);
+                }
+                
+                return isMatch && matchesSearch && typeMatch;
             }).forEach(ev => {
                 const div = document.createElement('div');
                 const amt = parseFloat(ev.amount) || 0;
-                if (ev.isBill) totals.debt += amt; else totals.income += amt;
+                
+                // Calculate Debt for either Bill or Card
+                if (ev.isBill || ev.isCard) totals.debt += amt; else totals.income += amt;
+                
                 div.className = 'event';
                 const diff = Math.ceil((day - today) / 86400000);
                 div.style.backgroundColor = ev.color || '#2ecc71';
                 div.style.setProperty('--event-color', ev.color || '#2ecc71');
                 
-                // Urgency mapping
                 if (diff <= 1) div.classList.add('urgent-red');
                 else if (diff <= 2) div.classList.add('urgent-yellow');
                 
@@ -279,9 +282,12 @@
         document.getElementById('amountInput').value = event ? event.amount : "";
         document.getElementById('notesInput').value = event ? (event.notes || "") : "";
         document.getElementById('billCheck').checked = event ? event.isBill : false;
+        document.getElementById('cardCheck').checked = event ? (event.isCard || false) : false;
         document.getElementById('recurCheck').checked = event ? event.recurring : false;
         selectedColor = event ? event.color : "#2ecc71";
+        
         document.getElementById('deleteBtn').style.display = event ? "block" : "none";
+        document.getElementById('duplicateBtn').style.display = event ? "block" : "none";
         document.getElementById('googleBtn').style.display = event ? "block" : "none";
         document.getElementById('modal-overlay').style.display = 'flex';
     }
@@ -291,16 +297,24 @@
         const amount = document.getElementById('amountInput').value;
         const notes = document.getElementById('notesInput').value;
         const isBill = document.getElementById('billCheck').checked;
+        const isCard = document.getElementById('cardCheck').checked;
         const recurring = document.getElementById('recurCheck').checked;
+        
         if (editingEventId) {
-            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, notes, isBill, recurring, color: selectedColor } : e);
+            events = events.map(e => e.id === editingEventId ? { ...e, title, amount, notes, isBill, isCard, recurring, color: selectedColor } : e);
         } else {
-            events.push({ id: Date.now(), date: selectedDateStr, title, amount, notes, isBill, recurring, color: selectedColor });
+            events.push({ id: Date.now(), date: selectedDateStr, title, amount, notes, isBill, isCard, recurring, color: selectedColor });
         }
         localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
         updateModifiedTimestamp();
         showToast("Event Saved!");
         closeModal(); renderCalendar();
+    }
+
+    function duplicateEvent() {
+        editingEventId = null; // Clears the ID so saveEvent creates a new entry instead of updating
+        saveEvent();
+        showToast("Event Copied!");
     }
 
     function deleteCurrentEvent() {
