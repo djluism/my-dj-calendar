@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.4.0</title>
+    <title>Pro DJ & Finance v2.4.1</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -33,13 +33,21 @@
 
         .event { position: relative; margin: 3px 0; padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; color: #000; border: 1px solid rgba(0,0,0,0.2); transition: background 0.3s; }
         
-        .urgent-vip { animation: oc-pulse-vip 1s infinite; border: 2px solid #fff; color: #fff !important; }
+        /* THE RUCKUS VIP STROBE - 0.4s Fast Cycle */
+        .urgent-vip { animation: ruckus-pulse 0.4s infinite; border: 2px solid #fff; font-weight: 900; }
         .urgent-red { animation: oc-pulse-red 2s infinite; border: 2px solid #fff; color: #fff !important; }
         .urgent-yellow { animation: oc-pulse-yellow 4s infinite; border: 1.5px solid #000; color: #000 !important; }
         
         .past-gray { background-color: var(--gray) !important; color: #dcdde1 !important; border: 1px solid #2f3640 !important; font-weight: normal; }
 
-        @keyframes oc-pulse-vip { 0% { background-color: var(--red); } 50% { background-color: var(--event-color); color: #000; } 100% { background-color: var(--red); } }
+        /* Bright Green -> Bright Yellow -> Electric Blue */
+        @keyframes ruckus-pulse { 
+            0% { background-color: #00ff00; color: #000; } 
+            33% { background-color: #ffff00; color: #000; } 
+            66% { background-color: #007bff; color: #fff; }
+            100% { background-color: #00ff00; color: #000; } 
+        }
+        
         @keyframes oc-pulse-red { 0% { background-color: var(--red); } 50% { background-color: var(--event-color); color: #000; } 100% { background-color: var(--red); } }
         @keyframes oc-pulse-yellow { 0% { background-color: var(--yellow); } 50% { background-color: var(--event-color); } 100% { background-color: var(--yellow); } }
 
@@ -268,15 +276,13 @@
                     
                     div.className = 'event';
                     
-                    // Time Math
                     const diff = Math.ceil((day - today) / 86400000);
                     const isPast = diff < 0;
-                    const isVIPFever = isPast && ev.isVIP && diff >= -7; // Only strobes if VIP and up to 7 days past
+                    const isVIPFever = isPast && ev.isVIP && diff >= -7; 
                     
                     div.style.backgroundColor = ev.color || '#2ecc71';
                     div.style.setProperty('--event-color', ev.color || '#2ecc71');
                     
-                    // Priority Hierarchy
                     if (isVIPFever) {
                         div.classList.add('urgent-vip');
                     } else if (isPast) {
@@ -313,10 +319,7 @@
     function openModal(date, event = null) {
         editingEventId = event ? event.id : null;
         document.getElementById('modalTitle').innerText = event ? "Edit" : "Add New";
-        
-        // Date input replaces the static text
         document.getElementById('eventDateInput').value = event ? event.date : date;
-        
         document.getElementById('eventInput').value = event ? (event.title || "") : "";
         document.getElementById('amountInput').value = event ? (event.amount || "") : "";
         document.getElementById('notesInput').value = event ? (event.notes || "") : "";
@@ -333,12 +336,11 @@
     }
 
     function prepareClone() {
-        editingEventId = null; // Detach from original event
+        editingEventId = null; 
         document.getElementById('modalTitle').innerText = "Pick Target Date & Save";
         document.getElementById('deleteBtn').style.display = "none";
         document.getElementById('duplicateBtn').style.display = "none";
         document.getElementById('googleBtn').style.display = "none";
-        // Visually prompt to pick a date
         document.getElementById('eventDateInput').style.border = "3px solid #f1c40f";
         document.getElementById('eventDateInput').focus();
         showToast("Pick target date and hit Save!");
@@ -397,7 +399,6 @@
     }
 
     function downloadBackup() {
-        // v2.4.0 Timestamped Filenames
         const now = new Date();
         const mon = now.toLocaleString('default', { month: 'short' });
         const d = now.getDate();
