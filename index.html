@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.4.1</title>
+    <title>Pro DJ & Finance v2.4.2</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -205,6 +205,15 @@
 
     function selectColor(c) { selectedColor = c; }
 
+    function dismissVIP(e, id) {
+        e.stopPropagation(); // Stops the modal from opening
+        events = events.map(ev => ev.id === id ? { ...ev, isVIP: false } : ev);
+        localStorage.setItem('djFinance_v2.2', JSON.stringify(events));
+        updateModifiedTimestamp();
+        showToast("Alert Dismissed!");
+        renderCalendar();
+    }
+
     function renderCalendar() {
         try {
             const grid = document.getElementById('calendar-grid');
@@ -293,7 +302,13 @@
                         div.classList.add('urgent-yellow');
                     }
                     
-                    div.innerText = `${ev.recurring ? '🔄 ' : ''}${ev.title || "Item"} ($${amt})`;
+                    let iconHTML = ev.recurring ? '<span style="margin-right: 4px;">🔄</span>' : '';
+                    if (isVIPFever) {
+                        let activeIcon = ev.recurring ? '🔄' : '🚨';
+                        iconHTML = `<span onclick="dismissVIP(event, ${ev.id})" style="margin-right: 4px; cursor: pointer; font-size: 1.1em; display: inline-block; padding: 2px;" title="Dismiss Alert">${activeIcon}</span>`;
+                    }
+                    
+                    div.innerHTML = `${iconHTML}<span>${ev.title || "Item"} ($${amt})</span>`;
                     div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
                     cell.appendChild(div);
                 });
