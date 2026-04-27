@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro DJ & Finance v2.4.2</title>
+    <title>Pro DJ & Finance v2.5</title>
     <style>
         :root {
             --bg-color: #0a0a0a; --cell-bg: #161616; --text-color: #f0f0f0; --border-color: #333; --accent: #007bff;
@@ -41,33 +41,25 @@
         @keyframes oc-pulse-red { 0% { background-color: var(--red); } 50% { background-color: var(--event-color); color: #000; } 100% { background-color: var(--red); } }
         @keyframes oc-pulse-yellow { 0% { background-color: var(--yellow); } 50% { background-color: var(--event-color); } 100% { background-color: var(--yellow); } }
 
-        /* GLOBAL HOVER TOOLTIP CSS */
+        /* --- GLOBAL HOVER TOOLTIPS --- */
         #card-tooltip {
-            position: fixed;
-            background: #111;
-            color: #fff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid var(--accent);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.9);
-            font-size: 0.75rem;
-            pointer-events: none;
-            display: none;
-            z-index: 9999;
-            white-space: nowrap;
-            text-transform: none;
-            font-weight: normal;
+            position: fixed; background: #111; color: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--accent);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.9); font-size: 0.75rem; pointer-events: none; display: none; z-index: 9999;
+            white-space: nowrap; font-weight: normal; text-transform: none;
         }
         #card-tooltip strong { color: var(--accent); font-size: 0.85rem; display: block; margin-bottom: 3px; text-transform: uppercase; }
         .card-number-hover {
-            color: var(--bg-color); /* Matches the black text of the event box */
-            background-color: rgba(255,255,255,0.4);
-            border-radius: 3px;
-            padding: 0 3px;
-            text-decoration: underline;
-            text-decoration-style: dotted;
-            cursor: help;
+            color: var(--bg-color); background-color: rgba(255,255,255,0.4); border-radius: 3px; padding: 0 3px;
+            text-decoration: underline; text-decoration-style: dotted; cursor: help;
         }
+
+        #event-tooltip {
+            position: fixed; background: #1a1a1a; color: #dcdde1; padding: 12px; border-radius: 8px; border: 1px solid #555;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.9); font-size: 0.75rem; pointer-events: none; display: none; z-index: 9998;
+            max-width: 250px; white-space: normal; word-wrap: break-word; font-weight: normal; text-transform: none;
+        }
+        #event-tooltip strong { color: #fff; font-size: 0.85rem; display: block; margin-bottom: 5px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .tooltip-tag { display: inline-block; padding: 3px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; margin-top: 8px; margin-right: 4px; }
 
         @media (max-width: 600px) {
             .mobile-hide { display: none !important; }
@@ -84,11 +76,10 @@
             #searchInput { width: 45%; }
             #gotoDate { width: 45%; }
         }
-
         @media (min-width: 601px) { .mobile-nav { display: none !important; } }
 
         #stats-panel { background: #000; padding: 10px 20px; display: flex; flex-direction: column; gap: 5px; font-size: 0.9rem; font-weight: 800; border-top: 1px solid #333; }
-        #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        #modal-overlay, #settings-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); display: none; justify-content: center; align-items: center; z-index: 2000; }
         .modal { background: #1a1a1a; padding: 25px; border-radius: 15px; width: 92%; max-width: 380px; border: 1px solid #555; max-height: 90vh; overflow-y: auto;}
         .modal input, .modal textarea { width: 100%; margin: 8px 0; background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
         .modal textarea { height: 60px; resize: none; }
@@ -101,12 +92,14 @@
     <div id="toast">Sync Successful!</div>
     
     <div id="card-tooltip"></div>
+    <div id="event-tooltip"></div>
 
     <header>
         <div class="controls">
             <button class="mobile-hide" onclick="moveByStep(-1)">PREV</button>
             <button onclick="goHome()" style="background:var(--accent)">HOME</button>
             <button class="btn-fullscreen mobile-hide" onclick="toggleFullscreen()">🔲 FULLSCREEN</button>
+            <button style="background:#555;" onclick="openSettingsModal()">⚙️ CARDS</button>
             <button style="background:#444;" onclick="toggleTheme()">🌓</button>
         </div>
         
@@ -144,6 +137,7 @@
         <button onclick="downloadBackup()" style="background:#222">BACKUP</button>
         <button onclick="document.getElementById('importFileMobile').click()" style="background:#444">IMPORT</button>
         <input type="file" id="importFileMobile" style="display:none" onchange="importBackup(event)">
+        <button onclick="openSettingsModal()" style="background:#555">⚙️</button>
         <button onclick="moveByStep(1)">NEXT WEEK</button>
     </div>
     
@@ -183,31 +177,147 @@
         </div>
     </div>
 
+    <div id="settings-overlay">
+        <div class="modal">
+            <h3 style="margin:0 0 15px 0; color:white;">💳 Manage Cards</h3>
+            
+            <div id="card-list" style="margin-bottom:15px; max-height:180px; overflow-y:auto;">
+                </div>
+            
+            <hr style="border-color:#444; margin: 15px 0;">
+            
+            <h4 style="margin:0 0 10px 0; color:#aaa; font-size: 0.8rem;">ADD NEW CARD</h4>
+            <input type="text" id="newCardNum" placeholder="Last 4 Digits (e.g. 1234)" maxlength="4">
+            <input type="text" id="newCardName" placeholder="Card Name (e.g. Chase Sapphire)">
+            <input type="text" id="newCardBank" placeholder="Bank Name (e.g. Chase)">
+            <input type="text" id="newCardUrl" placeholder="Website (e.g. chase.com)">
+            
+            <button onclick="addNewCard()" style="background:var(--accent); width:100%; margin-top:10px; margin-bottom:8px;">+ Add Card</button>
+            <button onclick="closeSettingsModal()" style="width:100%; background:transparent; border:1px solid #777; color:white; margin-top:5px;">Done</button>
+        </div>
+    </div>
+
 <script>
-    // --- CARD DICTIONARY ---
-    // Add your last 4 digits and their info here
-    const cardDictionary = {
-        "8978": { name: "Chase Visa", bank: "Chase Bank", url: "www.chase.com" },
-        "1234": { name: "Amex Platinum", bank: "American Express", url: "www.americanexpress.com" }
+    // --- DYNAMIC CARD DICTIONARY ENGINE ---
+    const defaultCards = {
+        "8978": { name: "Chase Visa", bank: "Chase Bank", url: "www.chase.com" }
     };
+    
+    // Load from memory, or use default if empty
+    let cardDictionary = JSON.parse(localStorage.getItem('djFinance_cards')) || defaultCards;
+
+    function openSettingsModal() {
+        renderCardList();
+        document.getElementById('settings-overlay').style.display = 'flex';
+    }
+
+    function closeSettingsModal() {
+        document.getElementById('settings-overlay').style.display = 'none';
+    }
+
+    function renderCardList() {
+        const list = document.getElementById('card-list');
+        list.innerHTML = "";
+        
+        if (Object.keys(cardDictionary).length === 0) {
+            list.innerHTML = `<div style="color:#777; font-size:0.8rem; text-align:center;">No cards saved yet.</div>`;
+            return;
+        }
+
+        for (const [num, data] of Object.entries(cardDictionary)) {
+            list.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:#222; padding:8px 12px; margin-bottom:6px; border-radius:6px; border: 1px solid #333;">
+                    <div style="font-size: 0.8rem;">
+                        <strong style="color:var(--accent); font-size: 0.9rem;">${num}</strong><br>
+                        ${data.name}
+                    </div>
+                    <button onclick="deleteCard('${num}')" style="background:var(--red); padding:5px 10px; font-size:0.7rem;">X</button>
+                </div>
+            `;
+        }
+    }
+
+    function addNewCard() {
+        const num = document.getElementById('newCardNum').value.trim();
+        const name = document.getElementById('newCardName').value.trim();
+        const bank = document.getElementById('newCardBank').value.trim();
+        const url = document.getElementById('newCardUrl').value.trim();
+
+        if(!num || num.length !== 4 || isNaN(num)) {
+            alert("Please enter exactly 4 numbers for the ID.");
+            return;
+        }
+        if(!name) {
+            alert("Please enter a Card Name.");
+            return;
+        }
+
+        cardDictionary[num] = { name, bank, url };
+        localStorage.setItem('djFinance_cards', JSON.stringify(cardDictionary));
+        
+        // Clear inputs
+        document.getElementById('newCardNum').value = "";
+        document.getElementById('newCardName').value = "";
+        document.getElementById('newCardBank').value = "";
+        document.getElementById('newCardUrl').value = "";
+        
+        showToast("Card Added!");
+        renderCardList();
+        renderCalendar(); // Instantly apply to the dashboard
+    }
+
+    function deleteCard(num) {
+        if(confirm(`Remove card ending in ${num}?`)) {
+            delete cardDictionary[num];
+            localStorage.setItem('djFinance_cards', JSON.stringify(cardDictionary));
+            renderCardList();
+            renderCalendar(); // Instantly update dashboard
+        }
+    }
 
     function showCardTooltip(e, cardNum) {
         const tooltip = document.getElementById('card-tooltip');
         const data = cardDictionary[cardNum];
         if (!data) return;
-
         tooltip.innerHTML = `<strong>💳 ${data.name}</strong>Bank: ${data.bank}<br>Web: ${data.url}`;
         tooltip.style.display = 'block';
-        
-        // Position it near the mouse
         tooltip.style.left = (e.clientX + 15) + 'px';
-        tooltip.style.top = (e.clientY + 15) + 'px';
+        tooltip.style.top = (e.clientY - 65) + 'px';
+    }
+    function hideCardTooltip() { document.getElementById('card-tooltip').style.display = 'none'; }
+
+    // --- EVENT NOTES ENGINE ---
+    function showEventTooltip(e, ev) {
+        if (!ev.notes && !ev.isBill && !ev.isCard && !ev.recurring) return;
+
+        const tooltip = document.getElementById('event-tooltip');
+        let html = `<strong>📝 ${ev.title || "Details"}</strong>`;
+        
+        if (ev.notes) {
+            html += `<div style="margin-top:6px; line-height: 1.4;">${ev.notes.replace(/\n/g, '<br>')}</div>`;
+        }
+        
+        let tags = "";
+        if (ev.isBill) tags += `<span class="tooltip-tag" style="background: rgba(162, 155, 254, 0.15); color: #a29bfe; border: 1px solid #a29bfe;">🧾 BILL</span>`;
+        if (ev.isCard) tags += `<span class="tooltip-tag" style="background: rgba(241, 196, 15, 0.15); color: #f1c40f; border: 1px solid #f1c40f;">💳 CARD</span>`;
+        if (ev.recurring) tags += `<span class="tooltip-tag" style="background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid #2ecc71;">🔄 MONTHLY</span>`;
+        
+        if (tags) html += `<div>${tags}</div>`;
+
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+        positionEventTooltip(e);
     }
 
-    function hideCardTooltip() {
-        document.getElementById('card-tooltip').style.display = 'none';
+    function positionEventTooltip(e) {
+        const tooltip = document.getElementById('event-tooltip');
+        if (tooltip.style.display !== 'none') {
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top = (e.clientY + 15) + 'px';
+        }
     }
-    // -----------------------
+    function hideEventTooltip() { document.getElementById('event-tooltip').style.display = 'none'; }
+    // --------------------------
 
     let currentViewDate = new Date();
     let events = JSON.parse(localStorage.getItem('djFinance_v2.2')) || [];
@@ -336,9 +446,9 @@
                         div.classList.add('urgent-yellow');
                     }
                     
-                    // --- THE NEW REGEX REPLACEMENT LOGIC ---
                     let displayTitle = ev.title || "Item";
                     
+                    // CARD REGEX REPLACEMENT (Uses dynamic dictionary)
                     displayTitle = displayTitle.replace(/\b(\d{4})\b/g, (match) => {
                         if (cardDictionary[match]) {
                             return `<span class="card-number-hover" onmouseover="showCardTooltip(event, '${match}')" onmouseout="hideCardTooltip()" onclick="event.stopPropagation()">${match}</span>`;
@@ -347,7 +457,11 @@
                     });
 
                     div.innerHTML = `${ev.recurring ? '🔄 ' : ''}${displayTitle} ($${amt})`;
-                    // ---------------------------------------
+
+                    // ATTACH THE NEW EVENT TOOLTIP LISTENERS
+                    div.onmouseenter = (e) => showEventTooltip(e, ev);
+                    div.onmousemove = (e) => positionEventTooltip(e);
+                    div.onmouseleave = (e) => hideEventTooltip();
 
                     div.onclick = (e) => { e.stopPropagation(); openModal(dateStr, ev); };
                     cell.appendChild(div);
@@ -439,20 +553,7 @@
         }
     }
 
-    function importBackup(event) {
-        const reader = new FileReader();
-        reader.onload = (e) => { 
-            try {
-                events = JSON.parse(e.target.result); 
-                localStorage.setItem('djFinance_v2.2', JSON.stringify(events)); 
-                updateModifiedTimestamp();
-                showToast("Import Successful!");
-                renderCalendar(); 
-            } catch (err) { alert("Error importing file."); }
-        };
-        reader.readAsText(event.target.files[0]);
-    }
-
+    // --- UPGRADED BACKUP & IMPORT ENGINE ---
     function downloadBackup() {
         const now = new Date();
         const mon = now.toLocaleString('default', { month: 'short' });
@@ -463,10 +564,43 @@
         h = h % 12; h = h ? h : 12; 
         const fileName = `dj_finance_${mon}${d}_${h}${m}${ampm}.json`;
 
-        const blob = new Blob([JSON.stringify(events, null, 2)], {type: 'application/json'});
+        // Package both events AND custom cards into the backup
+        const exportData = {
+            version: "2.5",
+            events: events,
+            cards: cardDictionary
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName; 
         a.click();
         showToast("Backup Saved!");
+    }
+
+    function importBackup(event) {
+        const reader = new FileReader();
+        reader.onload = (e) => { 
+            try {
+                const parsedData = JSON.parse(e.target.result); 
+                
+                // Smart Migration: Check if old format (just an array) or new v2.5 format
+                if (Array.isArray(parsedData)) {
+                    events = parsedData;
+                } else if (parsedData.version === "2.5") {
+                    events = parsedData.events || [];
+                    if (parsedData.cards) {
+                        cardDictionary = parsedData.cards;
+                        localStorage.setItem('djFinance_cards', JSON.stringify(cardDictionary));
+                    }
+                }
+
+                localStorage.setItem('djFinance_v2.2', JSON.stringify(events)); 
+                updateModifiedTimestamp();
+                showToast("Import Successful!");
+                renderCalendar(); 
+            } catch (err) { alert("Error importing file."); }
+        };
+        reader.readAsText(event.target.files[0]);
     }
 
     function moveByStep(n) {
